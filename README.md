@@ -92,3 +92,11 @@ src/store.js        JSON-Speicher in data/
 public/             Login, Dashboard, Overlay
 test/               Tests der Verlosungslogik
 ```
+
+## Losfee (ohne Server, ohne Twitch)
+
+`artifact/losfee.html` ist eine eigenständige Version für Gewinnspiele auf Instagram, TikTok, YouTube, Snapchat & Co. Sie ist als Seite auf claude.ai veröffentlicht und braucht keinen Server:
+- Teilnehmer per Kopieren & Einfügen aus Kommentaren oder Chat, doppelte Namen werden zusammengefasst
+- Automatische Prüfung: Pflichtwort, Mindestzahl markierter Freunde, Sperrliste, frühere Gewinner, „hat kommentiert“
+- Faire, gewichtete Ziehung (Web Crypto) im Vollbild mit Animation, mit Protokoll (Los X von Y)
+- Bedingungen, die keine Plattform per Schnittstelle herausgibt (Follows auf Instagram/TikTok/Snapchat, Likes, Stories), werden beim Gewinner mit Direktlinks abgehakt
