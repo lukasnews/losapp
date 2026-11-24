@@ -408,6 +408,7 @@ class Giveaway extends EventEmitter {
 
   async expireWinner() {
     if (this.status !== 'confirming') return;
+    clearTimeout(this.confirmTimer);
     const w = this.winners.find((x) => x.login === this.confirm.login && x.status === 'pending');
     if (w) {
       w.status = 'expired';

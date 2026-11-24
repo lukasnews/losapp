@@ -94,7 +94,7 @@ test('mehrere Gewinner ohne Doppelte, Verlauf + Ausschluss letzter Gewinner', as
 });
 
 test('Erneute Prüfung beim Ziehen disqualifiziert Entfolgte', async () => {
-  const g = make();
+  const g = make({ winnerCount: 2 });
   g.open();
   const u = user('weg');
   await g.handleMessage(u, '!join');
@@ -102,6 +102,7 @@ test('Erneute Prüfung beim Ziehen disqualifiziert Entfolgte', async () => {
   g.entries.get('weg').sim.follows = false; // entfolgt zwischendurch
   const w = await g.draw();
   assert.strictEqual(w.login, 'bleibt');
+  assert.strictEqual(await g.draw(), null); // 'weg' wird beim Ziehen geprüft und fliegt raus
   assert.ok(!g.entries.has('weg'));
 });
 
