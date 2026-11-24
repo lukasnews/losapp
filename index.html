@@ -170,6 +170,20 @@ details summary { cursor: pointer; font-weight: 600; }
 .acct span { font-size: 12px; color: var(--muted); overflow-wrap: anywhere; }
 .linkbtn { border: 0; background: none; color: var(--accent); min-height: 0; padding: 4px 0; font-weight: 500; }
 .err { color: var(--bad); font-size: 13px; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { min-height: 44px; padding: 8px 12px; border-radius: 12px; text-align: left; flex-direction: column; align-items: flex-start; gap: 2px; }
+.chip small { font-weight: 500; font-size: 12px; color: var(--muted); }
+.chip[aria-pressed=true] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.chip[aria-pressed=true] small { color: var(--accent-ink); opacity: .85; }
+.chip.combo { border-style: dashed; }
+.prize { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 8px; align-items: center; padding: 10px 12px; border: 1px solid var(--line); border-radius: 12px; }
+.prize input { padding: 7px 9px; }
+.prize .left { font-size: 12px; color: var(--muted); grid-column: 1 / -1; margin-top: -4px; }
+.step { display: inline-flex; align-items: center; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+.step button { border: 0; border-radius: 0; min-height: 36px; width: 36px; padding: 0; font-size: 18px; }
+.step b { min-width: 30px; text-align: center; font-variant-numeric: tabular-nums; }
+.gift { padding: 10px 14px; border-bottom: 1px solid var(--line); font-weight: 600; background: var(--surface2); }
+.stock { font-size: 13px; color: var(--muted); }
 </style>
 
 <div class="wrap">
@@ -209,12 +223,13 @@ details summary { cursor: pointer; font-weight: 600; }
     <div class="stub" aria-label="Übersicht">
       <div><b id="sPeople">0</b><span>Teilnehmer</span></div>
       <div><b id="sTickets">0</b><span>Lose</span></div>
-      <div><b id="sWinners">0/1</b><span>Gewinner</span></div>
+      <div><b id="sWinners">0/1</b><span id="sWinLbl">Gewinner</span></div>
     </div>
   </div>
 
   <div class="tabs" role="tablist">
-    <button role="tab" id="t-rules" aria-selected="true" aria-controls="p-rules">Bedingungen</button>
+    <button role="tab" id="t-rules" aria-selected="true" aria-controls="p-rules">Regeln</button>
+    <button role="tab" id="t-prizes" aria-selected="false" aria-controls="p-prizes">Preise</button>
     <button role="tab" id="t-people" aria-selected="false" aria-controls="p-people">Teilnehmer</button>
     <button role="tab" id="t-draw" aria-selected="false" aria-controls="p-draw">Ziehung</button>
     <button role="tab" id="t-hist" aria-selected="false" aria-controls="p-hist">Verlauf</button>
@@ -242,7 +257,7 @@ details summary { cursor: pointer; font-weight: 600; }
     <div class="panel">
       <h2>Regeln für die Lose</h2>
       <div class="grid2">
-        <label class="f">Anzahl Gewinner<input id="rWinners" type="number" min="1" max="100" inputmode="numeric"></label>
+        <label class="f" id="rWinnersBox">Anzahl Gewinner<input id="rWinners" type="number" min="1" max="100" inputmode="numeric"></label>
         <label class="f">Max. Lose pro Person<input id="rMaxT" type="number" min="1" max="100" inputmode="numeric"></label>
         <label class="f">Pflichtwort im Kommentar<input id="rWord" placeholder="z.B. #gewinnspiel (leer = egal)"></label>
         <label class="f">Mind. markierte Freunde (@)<input id="rTags" type="number" min="0" max="20" inputmode="numeric"></label>
@@ -250,6 +265,27 @@ details summary { cursor: pointer; font-weight: 600; }
       <label class="c"><input type="checkbox" id="rPerComment"><span>Jeder Kommentar ist ein Los <span class="muted small">(sonst 1 Los pro Person)</span></span></label>
       <label class="c"><input type="checkbox" id="rPrev"><span>Gewinner früherer Gewinnspiele ausschließen</span></label>
       <label class="f">Sperrliste (gilt für alle Gewinnspiele)<textarea id="rBlock" style="min-height:70px" placeholder="ein Name pro Zeile, z.B. Fake-Konten"></textarea></label>
+    </div>
+  </section>
+
+  <!-- Preise -->
+  <section role="tabpanel" id="p-prizes" aria-labelledby="t-prizes" hidden>
+    <div class="panel">
+      <h2>Preise</h2>
+      <p class="muted small">Lege an, was du verlost und wie oft, z.B. 5× PS5 und 3× GTA. Beim Auslosen tippst du nur noch auf den Preis, der Bestand zählt automatisch runter.</p>
+      <div id="prizeList" style="display:flex;flex-direction:column;gap:8px"></div>
+      <div class="row">
+        <input id="nPrize" placeholder="z.B. PS5" style="flex:1 1 160px;width:auto" aria-label="Name des Preises">
+        <input id="nQty" type="number" min="1" max="999" value="1" inputmode="numeric" style="width:80px" aria-label="Anzahl">
+        <button class="primary" id="addPrize">Hinzufügen</button>
+      </div>
+    </div>
+    <div class="panel">
+      <h2>Kombis</h2>
+      <p class="muted small">Pakete aus mehreren Preisen, z.B. PS5 + GTA. Stelle die Mengen ein und speichere die Kombi.</p>
+      <div id="comboBuilder" style="display:flex;flex-direction:column;gap:8px"></div>
+      <div class="row"><button id="saveCombo">Als Kombi speichern</button><span class="muted small" id="comboPreview"></span></div>
+      <div id="comboList" class="chips"></div>
     </div>
   </section>
 
@@ -284,6 +320,10 @@ details summary { cursor: pointer; font-weight: 600; }
   <!-- Ziehung -->
   <section role="tabpanel" id="p-draw" aria-labelledby="t-draw" hidden>
     <div class="panel drawhero">
+      <div id="prizePick" style="display:flex;flex-direction:column;gap:8px" hidden>
+        <div class="eyebrow">Was wird jetzt verlost?</div>
+        <div class="chips" id="pickChips"></div>
+      </div>
       <div id="drawNote"></div>
       <button class="ticket big" id="drawBtn">Gewinner ziehen</button>
       <p class="muted small">Gezogen wird mit dem Zufallsgenerator des Browsers (kryptografisch sicher), gewichtet nach Losen. Die Ziehung öffnet sich im Vollbild. So kannst du sie im Stream zeigen (Bildschirm teilen oder Fenster aufnehmen).</p>
@@ -387,12 +427,12 @@ function randInt(n) {
 }
 
 // ---------- Zustand ----------
-const S = { list: [], cur: null, settings: { blacklist: [] }, filter: 'all', tab: 'rules' };
+const S = { list: [], cur: null, settings: { blacklist: [] }, filter: 'all', tab: 'rules', sel: null, combo: {} };
 function blankGiveaway() {
   return {
     id: uid(), title: 'Neues Gewinnspiel', prize: '', createdAt: Date.now(), done: false,
     rules: { winners: 1, maxTickets: 1, word: '', minTags: 0, perComment: false, excludePrev: true },
-    conditions: [], entries: [], draws: [],
+    conditions: [], entries: [], draws: [], prizes: [], combos: [],
   };
 }
 
@@ -545,6 +585,37 @@ function setSave(state) {
     cloud ? 'In deinem Konto gespeichert' : 'Nur auf diesem Gerät gespeichert';
 }
 const G = () => S.cur;
+
+// ---------- Preise & Kombis ----------
+const prizes = (g) => g.prizes || (g.prizes = []);
+const combos = (g) => g.combos || (g.combos = []);
+const hasPrizes = (g) => prizes(g).length > 0;
+function stockLeft(g) {
+  const used = {};
+  for (const d of g.draws) if (d.status !== 'out' && d.items) for (const [k, n] of Object.entries(d.items)) used[k] = (used[k] || 0) + n;
+  const left = {};
+  for (const p of prizes(g)) left[p.id] = p.qty - (used[p.id] || 0);
+  return { left, used };
+}
+function itemsText(g, items) {
+  return Object.entries(items || {}).filter(([, n]) => n > 0)
+    .map(([k, n]) => `${n}× ${prizes(g).find((x) => x.id === k)?.name || '(gelöschter Preis)'}`).join(' + ');
+}
+function canGive(g, items, left = stockLeft(g).left) {
+  const e = Object.entries(items || {}).filter(([, n]) => n > 0);
+  return e.length > 0 && e.every(([k, n]) => (left[k] ?? 0) >= n);
+}
+function prizeOptions(g) {
+  return [
+    ...prizes(g).map((p) => ({ key: 'p:' + p.id, items: { [p.id]: 1 }, label: p.name, combo: false })),
+    ...combos(g).map((c) => ({ key: 'c:' + c.id, items: c.items, label: itemsText(g, c.items), combo: true })),
+  ];
+}
+function isDone(g) {
+  if (g.draws.some((d) => d.status === 'pending')) return false;
+  if (hasPrizes(g)) return Object.values(stockLeft(g).left).every((n) => n <= 0);
+  return g.draws.filter((x) => x.status === 'won').length >= g.rules.winners;
+}
 function changed() { if (G()) store.saveGiveaway(G()); render(); }
 
 // ---------- Teilnehmer einlesen ----------
@@ -619,7 +690,7 @@ function autoResult(cond, entry) {
 const isAuto = (c) => c.kind === 'comment' || c.kind === 'tag';
 
 // ---------- Ziehung ----------
-function drawOne() {
+function drawOne(items) {
   const g = G();
   const taken = new Set(g.draws.map((d) => d.p + ':' + d.h));
   const pool = evaluated().filter((x) => x.ok && !taken.has(x.e.p + ':' + x.e.h));
@@ -631,6 +702,7 @@ function drawOne() {
   const d = {
     id: uid(), h: pick.e.h, n: pick.e.n, p: pick.e.p, at: Date.now(), roll: roll + 1, total, pool: pool.length,
     tickets: pick.tickets, status: 'pending', checks: {}, handles: {}, reason: '',
+    items: items || null, prizeText: items ? itemsText(g, items) : '',
   };
   for (const c of g.conditions) { const a = autoResult(c, pick.e); if (a) d.checks[c.id] = a.ok; }
   g.draws.push(d);
@@ -643,7 +715,7 @@ function showStage(result) {
   const g = G();
   const st = $('#stage'); st.hidden = false;
   $('#stTitle').textContent = g.title;
-  $('#stPrize').textContent = g.prize ? 'Preis: ' + g.prize : '';
+  $('#stPrize').textContent = result.d.prizeText ? 'Gewinnt: ' + result.d.prizeText : g.prize ? 'Preis: ' + g.prize : '';
   const body = $('#stBody');
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const names = [];
@@ -705,9 +777,16 @@ function render() {
   const inn = ev.filter((x) => x.ok);
   $('#sPeople').textContent = fmtNum(inn.length);
   $('#sTickets').textContent = fmtNum(inn.reduce((a, x) => a + x.tickets, 0));
-  $('#sWinners').textContent = `${g.draws.filter((d) => d.status === 'won').length}/${g.rules.winners}`;
+  if (hasPrizes(g)) {
+    const left = Object.values(stockLeft(g).left).reduce((a, n) => a + Math.max(0, n), 0);
+    const all = prizes(g).reduce((a, p) => a + p.qty, 0);
+    $('#sWinners').textContent = `${fmtNum(left)}/${fmtNum(all)}`; $('#sWinLbl').textContent = 'Preise übrig';
+  } else {
+    $('#sWinners').textContent = `${g.draws.filter((d) => d.status === 'won').length}/${g.rules.winners}`; $('#sWinLbl').textContent = 'Gewinner';
+  }
+  $('#rWinnersBox').hidden = hasPrizes(g);
 
-  renderRules(); renderPeople(ev); renderDraw(inn); renderHist();
+  renderRules(); renderPrizes(); renderPeople(ev); renderDraw(inn); renderHist();
 }
 
 function renderRules() {
@@ -762,18 +841,100 @@ function renderDraw(inn) {
   const pending = g.draws.find((d) => d.status === 'pending');
   const taken = new Set(g.draws.map((d) => d.p + ':' + d.h));
   const left = inn.filter((x) => !taken.has(x.e.p + ':' + x.e.h)).length;
+  const withPrizes = hasPrizes(g);
+  const stock = stockLeft(g).left;
+
+  // Preis-Auswahl
+  $('#prizePick').hidden = !withPrizes;
+  if (withPrizes) {
+    if (S.sel && (S.sel.gid !== g.id || !canGive(g, S.sel.items, stock))) S.sel = null;
+    const opts = prizeOptions(g);
+    if (!S.sel) { const first = opts.find((o) => canGive(g, o.items, stock)); if (first) S.sel = { gid: g.id, key: first.key, items: first.items }; }
+    const box = $('#pickChips'); box.innerHTML = '';
+    for (const o of opts) {
+      const b = document.createElement('button'); b.className = 'chip' + (o.combo ? ' combo' : '');
+      const ok = canGive(g, o.items, stock);
+      b.disabled = !ok || !!pending;
+      b.setAttribute('aria-pressed', S.sel?.key === o.key);
+      const t = document.createElement('span'); t.textContent = o.label;
+      const sm = document.createElement('small');
+      if (o.combo) sm.textContent = ok ? 'Kombi' : 'Kombi · nicht mehr genug da';
+      else { const n = stock[Object.keys(o.items)[0]] ?? 0; sm.textContent = n > 0 ? `${n} übrig` : 'vergeben'; }
+      b.append(t, sm);
+      b.onclick = () => { S.sel = { gid: g.id, key: o.key, items: o.items }; render(); };
+      box.appendChild(b);
+    }
+  }
+
+  const done = withPrizes ? Object.values(stock).every((n) => n <= 0) && !pending : won >= g.rules.winners;
   const note = $('#drawNote');
   note.className = 'note'; note.hidden = false;
   if (!g.entries.length) note.textContent = 'Füge zuerst Teilnehmer ein.';
   else if (pending) note.textContent = `Prüfe zuerst @${pending.n} unten, bevor du weiter ziehst.`;
-  else if (won >= g.rules.winners) { note.className = 'note ok'; note.textContent = `Fertig: alle ${g.rules.winners} Gewinner stehen fest.`; }
+  else if (done) { note.className = 'note ok'; note.textContent = withPrizes ? 'Fertig: alle Preise sind vergeben.' : `Fertig: alle ${g.rules.winners} Gewinner stehen fest.`; }
   else if (!left) note.textContent = 'Keine gültigen Teilnehmer mehr übrig.';
+  else if (withPrizes && !S.sel) note.textContent = 'Wähle oben einen Preis oder eine Kombi.';
   else note.hidden = true;
-  $('#drawBtn').disabled = !left || !!pending || won >= g.rules.winners;
-  $('#drawBtn').textContent = won ? `Nächsten Gewinner ziehen (${won + 1}/${g.rules.winners})` : 'Gewinner ziehen';
+
+  const can = withPrizes ? canGive(g, S.sel?.items, stock) : won < g.rules.winners;
+  $('#drawBtn').disabled = !left || !!pending || !can;
+  $('#drawBtn').textContent = withPrizes && S.sel ? `${itemsText(g, S.sel.items)} verlosen`
+    : won ? `Nächsten Gewinner ziehen (${won + 1}/${g.rules.winners})` : 'Gewinner ziehen';
 
   const box = $('#winners'); box.innerHTML = '';
   for (const d of [...g.draws].reverse()) box.appendChild(winnerCard(d));
+}
+
+function stepper(value, min, max, onChange, label) {
+  const w = document.createElement('div'); w.className = 'step'; w.setAttribute('role', 'group'); w.setAttribute('aria-label', label);
+  const minus = document.createElement('button'); minus.textContent = '−'; minus.setAttribute('aria-label', label + ' verringern'); minus.disabled = value <= min;
+  const v = document.createElement('b'); v.textContent = value;
+  const plus = document.createElement('button'); plus.textContent = '+'; plus.setAttribute('aria-label', label + ' erhöhen'); plus.disabled = value >= max;
+  minus.onclick = () => onChange(value - 1); plus.onclick = () => onChange(value + 1);
+  w.append(minus, v, plus); return w;
+}
+
+function renderPrizes() {
+  const g = G(); const { left, used } = stockLeft(g);
+  const list = $('#prizeList'); list.innerHTML = '';
+  if (!prizes(g).length) list.innerHTML = '<div class="empty small">Noch keine Preise. Ohne Preise wird einfach die eingestellte Anzahl Gewinner gezogen.</div>';
+  for (const p of prizes(g)) {
+    const row = document.createElement('div'); row.className = 'prize';
+    const name = document.createElement('input'); name.value = p.name; name.setAttribute('aria-label', 'Name des Preises');
+    name.onchange = () => { p.name = name.value.trim().slice(0, 60) || p.name; changed(); };
+    const st = stepper(p.qty, Math.max(1, used[p.id] || 0), 999, (n) => { p.qty = n; changed(); }, 'Anzahl ' + p.name);
+    const del = document.createElement('button'); del.className = 'x'; del.textContent = '✕'; del.setAttribute('aria-label', p.name + ' löschen');
+    del.disabled = (used[p.id] || 0) > 0; del.title = del.disabled ? 'Schon verlost, kann nicht gelöscht werden' : '';
+    del.onclick = () => {
+      g.prizes = prizes(g).filter((x) => x !== p);
+      g.combos = combos(g).filter((c) => !c.items[p.id]);
+      delete S.combo[p.id]; changed();
+    };
+    const info = document.createElement('div'); info.className = 'left';
+    info.textContent = `${left[p.id]} von ${p.qty} übrig${used[p.id] ? ` · ${used[p.id]} vergeben` : ''}`;
+    row.append(name, st, del, info); list.appendChild(row);
+  }
+  // Kombi-Baukasten
+  const cb = $('#comboBuilder'); cb.innerHTML = '';
+  for (const id of Object.keys(S.combo)) if (!prizes(g).some((p) => p.id === id)) delete S.combo[id];
+  if (prizes(g).length < 1) cb.innerHTML = '<div class="muted small">Lege zuerst Preise an.</div>';
+  for (const p of prizes(g)) {
+    const row = document.createElement('div'); row.className = 'row'; row.style.justifyContent = 'space-between';
+    const n = document.createElement('span'); n.textContent = p.name;
+    row.append(n, stepper(S.combo[p.id] || 0, 0, 20, (v) => { S.combo[p.id] = v; render(); }, 'Kombi-Menge ' + p.name));
+    cb.appendChild(row);
+  }
+  const preview = itemsText(g, S.combo);
+  $('#comboPreview').textContent = preview ? 'Kombi: ' + preview : '';
+  $('#saveCombo').disabled = Object.values(S.combo).reduce((a, n) => a + n, 0) < 2;
+  const cl = $('#comboList'); cl.innerHTML = '';
+  for (const c of combos(g)) {
+    const b = document.createElement('div'); b.className = 'chip combo btn'; b.style.flexDirection = 'row'; b.style.alignItems = 'center';
+    const t = document.createElement('span'); t.textContent = itemsText(g, c.items);
+    const del = document.createElement('button'); del.className = 'x'; del.textContent = '✕'; del.setAttribute('aria-label', 'Kombi löschen');
+    del.onclick = () => { g.combos = combos(g).filter((x) => x !== c); changed(); };
+    b.append(t, del); cl.appendChild(b);
+  }
 }
 
 function winnerCard(d) {
@@ -786,6 +947,7 @@ function winnerCard(d) {
   badge.textContent = d.status === 'won' ? 'Gewinner bestätigt' : d.status === 'out' ? 'Disqualifiziert' : 'Wird geprüft';
   const plat = document.createElement('span'); plat.className = 'plat'; plat.textContent = PLATFORMS[d.p]?.label || '';
   head.append(h3, plat, badge); card.appendChild(head);
+  if (d.prizeText) { const gift = document.createElement('div'); gift.className = 'gift'; gift.textContent = (d.status === 'out' ? 'Hätte gewonnen: ' : 'Gewinnt: ') + d.prizeText; card.appendChild(gift); }
 
   const entry = g.entries.find((e) => e.h === d.h && e.p === d.p);
   if (d.status === 'out' && d.reason) { const r = document.createElement('div'); r.className = 'check'; r.textContent = 'Grund: ' + d.reason; card.appendChild(r); }
@@ -835,13 +997,13 @@ function winnerCard(d) {
     const anyNo = g.conditions.some((c) => { const a = entry ? autoResult(c, entry) : null; return a ? !a.ok : d.checks[c.id] === false; });
     const wf = document.createElement('div'); wf.className = 'wf';
     const ok = document.createElement('button'); ok.className = 'primary'; ok.textContent = 'Gewinner bestätigen'; ok.disabled = !allSet;
-    ok.onclick = () => { d.status = 'won'; if (g.draws.filter((x) => x.status === 'won').length >= g.rules.winners) g.done = true; changed(); toast('@' + d.n + ' ist Gewinner'); };
+    ok.onclick = () => { d.status = 'won'; g.done = isDone(g); changed(); toast('@' + d.n + ' ist Gewinner'); };
     const out = document.createElement('button'); out.className = 'danger'; out.textContent = 'Disqualifizieren & neu ziehen';
     out.onclick = () => {
       d.status = 'out';
       d.reason = g.conditions.filter((c) => { const a = entry ? autoResult(c, entry) : null; return a ? !a.ok : d.checks[c.id] === false; })
         .map((c) => `${PLATFORMS[c.platform].label}: ${KINDS[c.kind].label}`).join(', ') || 'manuell';
-      changed(); startDraw();
+      changed(); startDraw(d.items);
     };
     wf.append(ok, out);
     if (!allSet && !anyNo && g.conditions.length) { const s = document.createElement('span'); s.className = 'muted small'; s.textContent = 'Erst alle Bedingungen abhaken.'; wf.appendChild(s); }
@@ -851,11 +1013,12 @@ function winnerCard(d) {
     const wf = document.createElement('div'); wf.className = 'wf';
     const cp = document.createElement('button'); cp.className = 'sm'; cp.textContent = 'Glückwunsch-Text kopieren';
     cp.onclick = () => {
-      const txt = `🎉 Gewinner von „${g.title}“${g.prize ? ' (' + g.prize + ')' : ''}: @${d.n}! Bitte melde dich per Direktnachricht. Gezogen aus ${fmtNum(d.total)} Losen.`;
+      const pz = d.prizeText || g.prize;
+      const txt = `🎉 Gewinner von „${g.title}“${pz ? ' (' + pz + ')' : ''}: @${d.n}! Bitte melde dich per Direktnachricht. Gezogen aus ${fmtNum(d.total)} Losen.`;
       navigator.clipboard.writeText(txt).then(() => toast('Kopiert'), () => toast(txt));
     };
     const again = document.createElement('button'); again.className = 'sm danger'; again.textContent = 'Doch nicht (meldet sich nicht)';
-    again.onclick = () => { d.status = 'out'; d.reason = 'hat sich nicht gemeldet'; g.done = false; changed(); };
+    again.onclick = () => { d.status = 'out'; d.reason = 'hat sich nicht gemeldet'; g.done = false; changed(); toast(d.prizeText ? d.prizeText + ' ist wieder frei' : 'Neu ziehen möglich'); };
     wf.append(cp, again); card.appendChild(wf);
   }
   const audit = document.createElement('div'); audit.className = 'audit';
@@ -872,7 +1035,7 @@ function renderHist() {
     const info = document.createElement('div'); info.style.minWidth = '0';
     const n = document.createElement('div'); n.className = 'n'; n.textContent = g.title || 'Ohne Titel';
     const sub = document.createElement('div'); sub.className = 'txt';
-    const w = g.draws.filter((d) => d.status === 'won').map((d) => '@' + d.n);
+    const w = g.draws.filter((d) => d.status === 'won').map((d) => '@' + d.n + (d.prizeText ? ` (${d.prizeText})` : ''));
     sub.textContent = `${fmtDate(g.createdAt)} · ${fmtNum(g.entries.length)} Teilnehmer · ${w.length ? 'Gewinner: ' + w.join(', ') : 'noch offen'}`;
     info.append(n, sub);
     const st = document.createElement('span'); st.className = 'badge ' + (g.done ? 'won' : 'pending'); st.textContent = g.done ? 'fertig' : 'offen';
@@ -883,7 +1046,7 @@ function renderHist() {
 }
 
 // ---------- Aktionen ----------
-function select(id) { S.cur = S.list.find((g) => g.id === id) || S.list[0]; lsSet('losfee.cur', S.cur.id); render(); }
+function select(id) { S.cur = S.list.find((g) => g.id === id) || S.list[0]; S.sel = null; S.combo = {}; lsSet('losfee.cur', S.cur.id); render(); }
 function setTab(t) {
   S.tab = t;
   for (const b of document.querySelectorAll('[role=tab]')) {
@@ -891,8 +1054,13 @@ function setTab(t) {
     $('#' + b.getAttribute('aria-controls')).hidden = !on;
   }
 }
-function startDraw() {
-  const r = drawOne();
+function startDraw(items) {
+  const g = G();
+  if (hasPrizes(g)) {
+    items = items || S.sel?.items;
+    if (!canGive(g, items)) { toast(items ? 'Davon ist nichts mehr übrig' : 'Wähle zuerst einen Preis'); render(); return; }
+  } else items = null;
+  const r = drawOne(items);
   if (!r) { toast('Keine gültigen Teilnehmer mehr übrig'); render(); return; }
   changed(); setTab('draw'); showStage(r);
 }
@@ -937,7 +1105,22 @@ function bind() {
   };
   $('#pSearch').oninput = () => render();
 
-  $('#drawBtn').onclick = startDraw;
+  $('#drawBtn').onclick = () => startDraw();
+  const addPrize = () => {
+    const name = $('#nPrize').value.trim().slice(0, 60);
+    const qty = Math.max(1, Math.min(999, Math.floor(Number($('#nQty').value) || 1)));
+    if (!name) { $('#nPrize').focus(); toast('Gib einen Namen für den Preis ein'); return; }
+    prizes(G()).push({ id: uid(), name, qty });
+    $('#nPrize').value = ''; $('#nQty').value = 1; changed(); $('#nPrize').focus();
+  };
+  $('#addPrize').onclick = addPrize;
+  $('#nPrize').onkeydown = (e) => { if (e.key === 'Enter') addPrize(); };
+  $('#saveCombo').onclick = () => {
+    const items = Object.fromEntries(Object.entries(S.combo).filter(([, n]) => n > 0));
+    const key = JSON.stringify(Object.entries(items).sort());
+    if (combos(G()).some((c) => JSON.stringify(Object.entries(c.items).sort()) === key)) { toast('Diese Kombi gibt es schon'); return; }
+    combos(G()).push({ id: uid(), items }); S.combo = {}; changed(); toast('Kombi gespeichert');
+  };
   $('#stageClose').onclick = () => { $('#stage').hidden = true; render(); };
 
   $('#delG').onclick = () => { $('#delAsk').hidden = false; };
@@ -964,6 +1147,9 @@ function example() {
     { id: uid(), platform: 'instagram', kind: 'tag', target: '' },
     { id: uid(), platform: 'tiktok', kind: 'follow', target: '@deinkonto' },
   ];
+  const ps5 = uid(), gta = uid();
+  g.prizes = [{ id: ps5, name: 'PS5', qty: 5 }, { id: gta, name: 'GTA', qty: 3 }];
+  g.combos = [{ id: uid(), items: { [ps5]: 1, [gta]: 1 } }];
   const sample = `@beispiel_lisa Ich will gewinnen! @beispiel_tom
 @beispiel_tom wäre so cool @beispiel_anna @beispiel_kim
 beispiel_max.power nimm mich 🙏
