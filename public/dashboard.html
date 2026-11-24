@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Dashboard – Auslosung</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <header class="top">
+    <div class="brand">🎁 Live-Auslosung</div>
+    <span class="pill" id="twitchPill"><span class="dot"></span><span>Twitch</span></span>
+    <span class="pill" id="chatPill"><span class="dot"></span><span>Chat</span></span>
+    <span class="pill" id="wsPill"><span class="dot"></span><span>Live</span></span>
+    <a class="btn small" id="connectBtn" href="/auth/login" hidden>Mit Twitch verbinden</a>
+    <button class="small" id="logoutBtn">Abmelden</button>
+  </header>
+
+  <main>
+    <!-- Linke Spalte: Steuerung -->
+    <section class="stack">
+      <div class="card stack">
+        <div class="status"><span class="dot" id="statusDot"></span><span id="statusText">–</span></div>
+        <div class="muted" id="giveawayTitle"></div>
+        <div class="muted" id="timer"></div>
+        <div class="stats">
+          <div class="stat"><b id="statEntries">0</b><span>Teilnehmer</span></div>
+          <div class="stat"><b id="statRejected">0</b><span>Abgelehnt</span></div>
+          <div class="stat"><b id="statWinners">0</b><span>Gewinner</span></div>
+        </div>
+        <div class="row">
+          <button class="primary big" id="openBtn">▶ Teilnahme öffnen</button>
+          <button class="big" id="closeBtn">⏹ Schließen</button>
+        </div>
+        <button class="primary big" id="drawBtn" style="width:100%;justify-content:center">🎲 Gewinner ziehen</button>
+        <button class="danger small" id="resetBtn">Neue Verlosung / Zurücksetzen</button>
+      </div>
+
+      <div class="card stack">
+        <h2>🏆 Gewinner</h2>
+        <div id="winners" class="stack"><div class="empty">Noch niemand gezogen</div></div>
+      </div>
+
+      <div class="card stack">
+        <h2>📺 OBS-Overlay</h2>
+        <p class="muted">Als <b>Browserquelle</b> in OBS einfügen (z.B. 1920×1080). Hintergrund ist transparent.</p>
+        <input id="overlayUrl" readonly class="mono">
+        <div class="row">
+          <button class="small" id="copyOverlay">Kopieren</button>
+          <a class="btn small" id="openOverlay" target="_blank" rel="noopener">Vorschau öffnen</a>
+          <button class="small danger" id="rotateOverlay" title="Neuen geheimen Link erzeugen; alter Link funktioniert dann nicht mehr">Neuer Link</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Rechte Spalte: Details -->
+    <section class="card">
+      <nav class="tabs" id="tabs">
+        <button data-tab="entries" class="active">Teilnehmer</button>
+        <button data-tab="rejected">Abgelehnt</button>
+        <button data-tab="settings">Einstellungen</button>
+        <button data-tab="test">Prüfen &amp; Testen</button>
+        <button data-tab="log">Protokoll</button>
+        <button data-tab="history">Verlauf</button>
+        <button data-tab="account">Konto</button>
+      </nav>
+
+      <div class="tab active" id="tab-entries">
+        <div class="row" style="margin-bottom:10px">
+          <input id="entrySearch" placeholder="Teilnehmer suchen …" style="max-width:260px">
+          <span class="muted" id="entryCount"></span>
+        </div>
+        <div class="tablewrap">
+          <table>
+            <thead><tr><th>Name</th><th>Status</th><th>Gewicht</th><th>Chance</th><th></th></tr></thead>
+            <tbody id="entryRows"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="tab" id="tab-rejected">
+        <p class="muted">Wer <b>{keyword}</b> geschrieben hat, aber die Bedingungen nicht erfüllt.</p>
+        <div class="tablewrap">
+          <table>
+            <thead><tr><th>Zeit</th><th>Name</th><th>Grund</th></tr></thead>
+            <tbody id="rejectedRows"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="tab" id="tab-settings">
+        <form id="settingsForm"></form>
+      </div>
+
+      <div class="tab stack" id="tab-test">
+        <fieldset>
+          <legend>Echten Twitch-Nutzer prüfen</legend>
+          <p class="muted">Prüft einen Nutzer live gegen die aktuellen Bedingungen (Follow, Abo, VIP, Mod, Konto-Alter …).</p>
+          <form class="row" id="checkForm">
+            <input id="checkLogin" placeholder="Twitch-Name" style="max-width:260px" required>
+            <button class="primary" type="submit">Prüfen</button>
+          </form>
+          <div id="checkResult"></div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Testmodus: simulierter Zuschauer</legend>
+          <p class="muted">Lege einen Testnutzer mit beliebigen Eigenschaften an und schicke eine Chat-Nachricht – ohne dass jemand im echten Chat schreiben muss.</p>
+          <form id="simForm" class="stack">
+            <div class="grid3">
+              <div><label>Name</label><input name="login" value="testzuschauer" required></div>
+              <div><label>Chat-Nachricht</label><input name="message" value="!join"></div>
+              <div><label>Abo-Stufe</label><select name="subTier"><option value="0">kein Abo</option><option value="1">Stufe 1</option><option value="2">Stufe 2</option><option value="3">Stufe 3</option></select></div>
+              <div class="field check"><input type="checkbox" name="follows" id="simFollows" checked><label for="simFollows">Folgt</label></div>
+              <div><label>Folgt seit (Tage)</label><input name="followDays" type="number" min="0" value="30"></div>
+              <div><label>Konto-Alter (Tage)</label><input name="accountAgeDays" type="number" min="0" value="365"></div>
+              <div class="field check"><input type="checkbox" name="vip" id="simVip"><label for="simVip">VIP</label></div>
+              <div class="field check"><input type="checkbox" name="mod" id="simMod"><label for="simMod">Moderator</label></div>
+            </div>
+            <div class="row">
+              <button type="button" id="simCheck">Nur prüfen</button>
+              <button class="primary" type="submit">Nachricht senden</button>
+            </div>
+          </form>
+          <div id="simResult"></div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Massentest</legend>
+          <p class="muted">Erzeugt zufällige Testzuschauer, die das Schlüsselwort schreiben (Teilnahme muss offen sein).</p>
+          <div class="row">
+            <input id="bulkCount" type="number" value="25" min="1" max="500" style="max-width:110px">
+            <button id="bulkBtn">Testzuschauer hinzufügen</button>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Chat testen</legend>
+          <div class="row">
+            <input id="chatTestMsg" value="Test von der Auslosungs-App ✅" style="max-width:360px">
+            <button id="chatTestBtn">In den Chat senden</button>
+            <button id="chatReconnect">Chat neu verbinden</button>
+          </div>
+        </fieldset>
+      </div>
+
+      <div class="tab" id="tab-log"><div class="log" id="log"></div></div>
+
+      <div class="tab" id="tab-history">
+        <div class="tablewrap">
+          <table>
+            <thead><tr><th>Datum</th><th>Verlosung</th><th>Teilnehmer</th><th>Gewinner</th></tr></thead>
+            <tbody id="historyRows"></tbody>
+          </table>
+        </div>
+        <button class="small danger" id="clearHistory" style="margin-top:10px">Verlauf löschen</button>
+      </div>
+
+      <div class="tab stack" id="tab-account">
+        <div id="accountInfo"></div>
+        <div class="row">
+          <a class="btn primary" href="/auth/login">Mit Twitch (neu) verbinden</a>
+          <button class="danger" id="disconnectTwitch">Twitch trennen</button>
+        </div>
+        <p class="muted">Benötigte Berechtigungen: Chat lesen/schreiben, Follower lesen, Abonnenten lesen, VIPs lesen, Moderatoren lesen.</p>
+      </div>
+    </section>
+  </main>
+
+  <div id="toast" class="toast" hidden></div>
+  <script src="/static/dashboard.js"></script>
+</body>
+</html>

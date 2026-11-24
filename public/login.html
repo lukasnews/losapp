@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Anmelden – Auslosung</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <div class="center">
+    <div class="card login stack">
+      <h1>🎁 Live-Auslosung</h1>
+      <p class="muted">Melde dich mit dem Twitch-Konto deines Kanals an. Die App liest den Chat und prüft Follows, Abos, VIPs und Mods.</p>
+      <div id="error" class="result bad" hidden></div>
+      <a id="twitch" class="btn primary twitch-btn" href="/auth/login">Mit Twitch anmelden</a>
+      <p id="notwitch" class="muted" hidden>Twitch ist noch nicht eingerichtet (TWITCH_CLIENT_ID / TWITCH_CLIENT_SECRET in der <span class="mono">.env</span>). Du kannst die App im Testmodus mit dem Admin-Passwort ausprobieren.</p>
+      <form id="pw" class="stack" hidden>
+        <div>
+          <label for="password">Admin-Passwort (Testmodus / Zugriff für Mods)</label>
+          <input id="password" type="password" autocomplete="current-password" required>
+        </div>
+        <button class="primary" type="submit">Anmelden</button>
+      </form>
+    </div>
+  </div>
+  <script>
+    const params = new URLSearchParams(location.search);
+    if (params.get('error')) { const e = document.getElementById('error'); e.textContent = params.get('error'); e.hidden = false; }
+    fetch('/auth/info').then((r) => r.json()).then((info) => {
+      if (!info.twitchConfigured) { document.getElementById('twitch').hidden = true; document.getElementById('notwitch').hidden = false; }
+      if (info.passwordLogin) document.getElementById('pw').hidden = false;
+    });
+    document.getElementById('pw').addEventListener('submit', async (ev) => {
+      ev.preventDefault();
+      const r = await fetch('/auth/password', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ password: document.getElementById('password').value }) });
+      if (r.ok) location.href = '/dashboard';
+      else { const e = document.getElementById('error'); e.textContent = (await r.json()).error; e.hidden = false; }
+    });
+  </script>
+</body>
+</html>
