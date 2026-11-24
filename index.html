@@ -1,0 +1,904 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}</style>
+</head>
+<body>
+<title>Losfee</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* Layout: eine schmale Werkbank-Spalte, oben Gewinnspiel-Kopf, darunter Reiter; Ziehung als Vollbild-Bühne */
+:root {
+  --bg: #eef0f6; --surface: #ffffff; --surface2: #e4e7f1; --line: #d3d7e4;
+  --ink: #141625; --muted: #5d6178; --accent: #2f56ff; --accent-ink: #ffffff;
+  --ticket: #ffc93c; --ticket-ink: #2a2100; --ok: #138a4c; --bad: #c8322b; --warn: #a76a00;
+  --ok-bg: #e2f5ea; --bad-bg: #fbe6e4; --warn-bg: #fff2d6;
+  --stage: #0f1120; --stage-ink: #ffffff;
+  --display: "Bricolage Grotesque", "Arial Rounded MT Bold", system-ui, sans-serif;
+  --body: Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace;
+  --r: 14px;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0f1120; --surface: #181b2e; --surface2: #22263d; --line: #2f3450;
+  --ink: #eef0fa; --muted: #9aa0bd; --accent: #6f8bff; --accent-ink: #0b0e1d;
+  --ticket: #ffc93c; --ticket-ink: #2a2100; --ok: #4fd18b; --bad: #ff7a72; --warn: #ffc15a;
+  --ok-bg: #133325; --bad-bg: #3a1a1c; --warn-bg: #3a2c10; --stage: #070812; --stage-ink: #ffffff;
+  color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #0f1120; --surface: #181b2e; --surface2: #22263d; --line: #2f3450;
+  --ink: #eef0fa; --muted: #9aa0bd; --accent: #6f8bff; --accent-ink: #0b0e1d;
+  --ticket: #ffc93c; --ticket-ink: #2a2100; --ok: #4fd18b; --bad: #ff7a72; --warn: #ffc15a;
+  --ok-bg: #133325; --bad-bg: #3a1a1c; --warn-bg: #3a2c10; --stage: #070812; --stage-ink: #ffffff;
+  color-scheme: dark; }
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { background: var(--bg); color: var(--ink); font: 15px/1.5 var(--body); }
+.wrap { max-width: 760px; margin: 0 auto; padding-block: 14px 80px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: flex; flex-direction: column; gap: 14px; }
+h1, h2, h3 { font-family: var(--display); margin: 0; text-wrap: balance; line-height: 1.15; }
+h1 { font-size: 26px; font-weight: 800; letter-spacing: -.01em; }
+h2 { font-size: 19px; font-weight: 600; }
+h3 { font-size: 15px; font-weight: 600; }
+p { margin: 0; }
+.muted { color: var(--muted); }
+.small { font-size: 13px; }
+.mono { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+.eyebrow { font-size: 11px; text-transform: uppercase; letter-spacing: .1em; color: var(--muted); font-weight: 600; }
+
+button, .btn { font: 600 14px/1 var(--body); border-radius: 10px; padding: 11px 14px; cursor: pointer;
+  border: 1px solid var(--line); background: var(--surface); color: var(--ink); text-decoration: none;
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 42px; }
+button:focus-visible, .btn:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 3px solid var(--accent); outline-offset: 1px; }
+button.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+button.ticket { background: var(--ticket); border-color: var(--ticket); color: var(--ticket-ink); }
+button.ghost { background: transparent; }
+button.danger { color: var(--bad); }
+button.sm, .btn.sm { padding: 7px 10px; min-height: 34px; font-size: 13px; }
+button:disabled { opacity: .45; cursor: not-allowed; }
+input, select, textarea { font: 15px/1.4 var(--body); color: var(--ink); background: var(--surface); border: 1px solid var(--line);
+  border-radius: 10px; padding: 10px 11px; width: 100%; min-width: 0; }
+textarea { min-height: 140px; resize: vertical; font-family: var(--mono); font-size: 13px; }
+input[type=checkbox] { width: 20px; height: 20px; accent-color: var(--accent); flex: none; }
+label.f { display: flex; flex-direction: column; gap: 5px; font-size: 13px; font-weight: 500; color: var(--muted); min-width: 0; }
+label.c { display: flex; gap: 10px; align-items: flex-start; font-size: 14px; color: var(--ink); }
+.row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+@media (max-width: 520px) { .grid2 { grid-template-columns: minmax(0, 1fr); } }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 16px; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+
+/* Kopf */
+.top { display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+.brand { display: flex; align-items: center; gap: 10px; }
+.logo { width: 34px; height: 34px; border-radius: 9px; background: var(--ticket); display: grid; place-items: center; color: var(--ticket-ink); font: 800 18px var(--display); transform: rotate(-6deg); }
+.save { font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 6px; }
+.save i { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); display: inline-block; }
+.save.ok i { background: var(--ok); } .save.local i { background: var(--warn); }
+.head { display: flex; flex-direction: column; gap: 10px; }
+.head .row select { flex: 1 1 200px; }
+
+/* Losabschnitt-Statistik */
+.stub { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border: 1px dashed var(--line); border-radius: 12px; overflow: hidden; }
+.stub div { padding: 10px; text-align: center; background: var(--surface2); }
+.stub div + div { border-left: 1px dashed var(--line); }
+.stub b { display: block; font: 800 24px/1.1 var(--display); font-variant-numeric: tabular-nums; }
+.stub span { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; }
+
+/* Reiter */
+.tabs { display: flex; gap: 4px; background: var(--surface2); padding: 4px; border-radius: 12px; overflow-x: auto; }
+.tabs button { flex: 1 1 auto; border: 0; background: transparent; color: var(--muted); min-height: 38px; padding: 8px 6px; font-size: 13px; }
+.tabs button[aria-selected=true] { background: var(--surface); color: var(--ink); box-shadow: 0 1px 2px rgba(0,0,0,.12); }
+section[role=tabpanel] { display: flex; flex-direction: column; gap: 14px; }
+
+/* Bedingungen */
+.cond { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 10px 12px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
+.plat { font: 600 11px/1 var(--body); padding: 5px 7px; border-radius: 6px; background: var(--surface2); white-space: nowrap; }
+.how { font-size: 12px; padding: 2px 7px; border-radius: 99px; white-space: nowrap; }
+.how.auto { background: var(--ok-bg); color: var(--ok); } .how.man { background: var(--warn-bg); color: var(--warn); }
+.cond .t { min-width: 0; overflow-wrap: anywhere; }
+
+/* Teilnehmer */
+.list { border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+.list .scroll { max-height: 460px; overflow: auto; }
+.ent { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 8px; align-items: center; padding: 9px 12px; border-top: 1px solid var(--line); background: var(--surface); }
+.ent:first-child { border-top: 0; }
+.ent .n { font-weight: 600; overflow-wrap: anywhere; }
+.ent .why { font-size: 12px; color: var(--bad); }
+.ent .txt { font-size: 12px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ent.out .n { text-decoration: line-through; color: var(--muted); }
+.tix { font: 600 12px var(--mono); background: var(--ticket); color: var(--ticket-ink); padding: 3px 7px; border-radius: 5px; }
+.x { border: 0; background: transparent; color: var(--muted); min-height: 32px; padding: 4px 8px; }
+.filterbar { display: flex; gap: 6px; padding: 8px; background: var(--surface2); flex-wrap: wrap; }
+.filterbar button { min-height: 32px; padding: 6px 10px; font-size: 13px; }
+.filterbar button[aria-pressed=true] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.note { padding: 10px 12px; border-radius: 10px; background: var(--warn-bg); color: var(--warn); font-size: 13px; }
+.note.ok { background: var(--ok-bg); color: var(--ok); }
+.empty { padding: 26px 16px; text-align: center; color: var(--muted); }
+
+/* Ziehung */
+.drawhero { display: flex; flex-direction: column; gap: 12px; align-items: stretch; }
+.big { min-height: 58px; font-size: 18px; font-family: var(--display); }
+.winner { border: 1px solid var(--line); border-radius: 14px; overflow: hidden; background: var(--surface); }
+.winner .wh { padding: 12px 14px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; border-bottom: 1px solid var(--line); }
+.winner .wh h3 { font-size: 20px; margin-right: auto; overflow-wrap: anywhere; }
+.badge { font-size: 12px; font-weight: 600; padding: 4px 9px; border-radius: 99px; }
+.badge.pending { background: var(--warn-bg); color: var(--warn); } .badge.won { background: var(--ok-bg); color: var(--ok); } .badge.out { background: var(--bad-bg); color: var(--bad); }
+.check { padding: 12px 14px; border-top: 1px solid var(--line); display: flex; flex-direction: column; gap: 8px; }
+.check:first-of-type { border-top: 0; }
+.check .q { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.check .q b { margin-right: auto; }
+.yn { display: flex; gap: 6px; }
+.yn button { min-height: 36px; padding: 6px 12px; }
+.yn button.on-yes { background: var(--ok); border-color: var(--ok); color: #fff; }
+.yn button.on-no { background: var(--bad); border-color: var(--bad); color: #fff; }
+.links { display: flex; gap: 6px; flex-wrap: wrap; }
+.links a { font-size: 13px; color: var(--accent); text-decoration: none; border: 1px solid var(--line); border-radius: 8px; padding: 6px 9px; }
+.audit { font: 12px/1.5 var(--mono); color: var(--muted); padding: 10px 14px; background: var(--surface2); overflow-wrap: anywhere; }
+.wf { padding: 12px 14px; display: flex; gap: 8px; flex-wrap: wrap; border-top: 1px solid var(--line); }
+.hand { display: flex; gap: 6px; align-items: center; }
+.hand input { max-width: 200px; padding: 6px 9px; font-size: 13px; }
+
+/* Bühne (Vollbild für den Stream) */
+.stage { position: fixed; inset: 0; z-index: 50; background: var(--stage); color: var(--stage-ink); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; text-align: center;
+  padding: calc(env(safe-area-inset-top, 0px) + 20px) max(20px, env(safe-area-inset-right, 0px)) calc(env(safe-area-inset-bottom, 0px) + 20px) max(20px, env(safe-area-inset-left, 0px)); }
+.stage .ttl { font: 800 clamp(22px, 5vw, 44px)/1.1 var(--display); }
+.stage .prz { color: var(--ticket); font: 600 clamp(16px, 3.4vw, 28px) var(--display); }
+.reelbox { width: min(92vw, 820px); height: clamp(72px, 14vw, 130px); overflow: hidden; position: relative; border-radius: 18px; background: rgba(255,255,255,.06); border: 2px solid var(--ticket);
+  -webkit-mask-image: linear-gradient(transparent, #000 25%, #000 75%, transparent); mask-image: linear-gradient(transparent, #000 25%, #000 75%, transparent); }
+.reel { position: absolute; inset: 0 0 auto; will-change: transform; }
+.reel div { height: clamp(72px, 14vw, 130px); display: flex; align-items: center; justify-content: center; font: 800 clamp(28px, 7.5vw, 72px)/1 var(--display); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding: 0 16px; }
+.stage .lbl { font: 600 13px var(--body); letter-spacing: .2em; text-transform: uppercase; opacity: .7; }
+.stage .win { font: 800 clamp(34px, 9vw, 96px)/1.05 var(--display); color: var(--ticket); overflow-wrap: anywhere; animation: pop .5s cubic-bezier(.2,1.5,.4,1); }
+.stage .meta { font: 500 14px var(--mono); opacity: .65; }
+.stage .close { position: absolute; top: calc(env(safe-area-inset-top, 0px) + 12px); right: max(12px, env(safe-area-inset-right, 0px)); background: rgba(255,255,255,.1); color: #fff; border-color: rgba(255,255,255,.2); }
+.stage canvas { position: absolute; inset: 0; pointer-events: none; width: 100%; height: 100%; }
+@keyframes pop { from { transform: scale(.6); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .stage .win { animation: none; } }
+
+.toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(env(safe-area-inset-bottom, 0px) + 16px); z-index: 60; background: var(--ink); color: var(--bg); padding: 10px 16px; border-radius: 10px; font-size: 14px; max-width: calc(100vw - 32px); }
+.confirmbar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; padding: 10px 12px; border-radius: 10px; background: var(--bad-bg); color: var(--bad); font-size: 14px; }
+details summary { cursor: pointer; font-weight: 600; }
+</style>
+
+<div class="wrap">
+  <div class="top">
+    <div class="brand"><div class="logo" aria-hidden="true">L</div><h1>Losfee</h1></div>
+    <div class="save" id="save"><i></i><span>Lädt …</span></div>
+  </div>
+
+  <div class="panel head">
+    <div class="row">
+      <select id="gsel" aria-label="Gewinnspiel auswählen"></select>
+      <button class="sm" id="newG">+ Neues Gewinnspiel</button>
+    </div>
+    <div class="grid2">
+      <label class="f">Titel<input id="gTitle" placeholder="z.B. 10k-Follower-Gewinnspiel"></label>
+      <label class="f">Preis<input id="gPrize" placeholder="z.B. PS5-Controller"></label>
+    </div>
+    <div class="stub" aria-label="Übersicht">
+      <div><b id="sPeople">0</b><span>Teilnehmer</span></div>
+      <div><b id="sTickets">0</b><span>Lose</span></div>
+      <div><b id="sWinners">0/1</b><span>Gewinner</span></div>
+    </div>
+  </div>
+
+  <div class="tabs" role="tablist">
+    <button role="tab" id="t-rules" aria-selected="true" aria-controls="p-rules">Bedingungen</button>
+    <button role="tab" id="t-people" aria-selected="false" aria-controls="p-people">Teilnehmer</button>
+    <button role="tab" id="t-draw" aria-selected="false" aria-controls="p-draw">Ziehung</button>
+    <button role="tab" id="t-hist" aria-selected="false" aria-controls="p-hist">Verlauf</button>
+  </div>
+
+  <!-- Bedingungen -->
+  <section role="tabpanel" id="p-rules" aria-labelledby="t-rules">
+    <div class="panel">
+      <h2>Was muss man tun?</h2>
+      <p class="muted small">Jede Bedingung wird beim Gewinner geprüft. <span class="how auto">automatisch</span> prüft die App selbst anhand der eingefügten Kommentare. <span class="how man">beim Gewinner</span> prüfst du mit einem Tipp auf die Direktlinks. Instagram, TikTok und Snapchat geben Follower-Listen an keine App heraus.</p>
+      <div id="condList" style="display:flex;flex-direction:column;gap:8px"></div>
+      <details id="addCondBox">
+        <summary>+ Bedingung hinzufügen</summary>
+        <div style="display:flex;flex-direction:column;gap:10px;margin-top:10px">
+          <div class="grid2">
+            <label class="f">Plattform<select id="cPlat"></select></label>
+            <label class="f">Was?<select id="cKind"></select></label>
+          </div>
+          <label class="f"><span id="cTargetLbl">Konto oder Link</span><input id="cTarget" placeholder="@deinkonto oder Link zum Beitrag"></label>
+          <button class="primary" id="addCond">Bedingung hinzufügen</button>
+        </div>
+      </details>
+    </div>
+
+    <div class="panel">
+      <h2>Regeln für die Lose</h2>
+      <div class="grid2">
+        <label class="f">Anzahl Gewinner<input id="rWinners" type="number" min="1" max="100" inputmode="numeric"></label>
+        <label class="f">Max. Lose pro Person<input id="rMaxT" type="number" min="1" max="100" inputmode="numeric"></label>
+        <label class="f">Pflichtwort im Kommentar<input id="rWord" placeholder="z.B. #gewinnspiel (leer = egal)"></label>
+        <label class="f">Mind. markierte Freunde (@)<input id="rTags" type="number" min="0" max="20" inputmode="numeric"></label>
+      </div>
+      <label class="c"><input type="checkbox" id="rPerComment"><span>Jeder Kommentar ist ein Los <span class="muted small">(sonst 1 Los pro Person)</span></span></label>
+      <label class="c"><input type="checkbox" id="rPrev"><span>Gewinner früherer Gewinnspiele ausschließen</span></label>
+      <label class="f">Sperrliste (gilt für alle Gewinnspiele)<textarea id="rBlock" style="min-height:70px" placeholder="ein Name pro Zeile, z.B. Fake-Konten"></textarea></label>
+    </div>
+  </section>
+
+  <!-- Teilnehmer -->
+  <section role="tabpanel" id="p-people" aria-labelledby="t-people" hidden>
+    <div class="panel">
+      <h2>Teilnehmer einfügen</h2>
+      <p class="muted small">Kopiere Kommentare oder Chat-Namen und füge sie hier ein. Eine Zeile pro Kommentar, der Name zuerst: <span class="mono">@lisa_m mega! @tom @anna</span>. Doppelte Namen werden zusammengefasst.</p>
+      <div class="grid2">
+        <label class="f">Plattform<select id="iPlat"></select></label>
+        <label class="f">Woher?<select id="iSrc"><option value="comments">Kommentare unter dem Beitrag</option><option value="list">Liste / Chat / sonstiges</option></select></label>
+      </div>
+      <textarea id="iText" aria-label="Kommentare einfügen" placeholder="@lisa_m Ich will gewinnen! @tom @anna&#10;max.power #gewinnspiel @kim&#10;@jule"></textarea>
+      <div class="row"><button class="primary" id="iGo">Übernehmen</button><span class="muted small" id="iInfo"></span></div>
+    </div>
+
+    <div class="panel">
+      <div class="row" style="justify-content:space-between"><h2>Teilnehmerliste</h2><button class="sm danger" id="clearPeople">Alle löschen</button></div>
+      <div id="clearAsk" class="confirmbar" hidden>Wirklich alle Teilnehmer löschen?<button class="sm danger" id="clearYes">Ja, löschen</button><button class="sm" id="clearNo">Abbrechen</button></div>
+      <div class="list">
+        <div class="filterbar">
+          <button aria-pressed="true" data-f="all">Alle</button>
+          <button aria-pressed="false" data-f="in">Dabei</button>
+          <button aria-pressed="false" data-f="out">Ausgeschlossen</button>
+          <input id="pSearch" placeholder="Suchen …" style="flex:1 1 120px;width:auto;padding:6px 9px;font-size:13px" aria-label="Teilnehmer suchen">
+        </div>
+        <div class="scroll" id="pList"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Ziehung -->
+  <section role="tabpanel" id="p-draw" aria-labelledby="t-draw" hidden>
+    <div class="panel drawhero">
+      <div id="drawNote"></div>
+      <button class="ticket big" id="drawBtn">Gewinner ziehen</button>
+      <p class="muted small">Gezogen wird mit dem Zufallsgenerator des Browsers (kryptografisch sicher), gewichtet nach Losen. Die Ziehung öffnet sich im Vollbild. So kannst du sie im Stream zeigen (Bildschirm teilen oder Fenster aufnehmen).</p>
+    </div>
+    <div id="winners" style="display:flex;flex-direction:column;gap:12px"></div>
+  </section>
+
+  <!-- Verlauf -->
+  <section role="tabpanel" id="p-hist" aria-labelledby="t-hist" hidden>
+    <div class="panel">
+      <h2>Alle Gewinnspiele</h2>
+      <div id="hist"></div>
+    </div>
+    <div class="panel">
+      <h3>Gewinnspiel löschen</h3>
+      <p class="muted small">Löscht das aktuell gewählte Gewinnspiel mit allen Teilnehmern.</p>
+      <div class="row"><button class="danger" id="delG">Dieses Gewinnspiel löschen</button></div>
+      <div id="delAsk" class="confirmbar" hidden>Endgültig löschen?<button class="sm danger" id="delYes">Ja, löschen</button><button class="sm" id="delNo">Abbrechen</button></div>
+    </div>
+  </section>
+</div>
+
+<div class="stage" id="stage" hidden>
+  <canvas id="fx"></canvas>
+  <button class="close sm" id="stageClose">Schließen</button>
+  <div class="ttl" id="stTitle"></div>
+  <div class="prz" id="stPrize"></div>
+  <div id="stBody"></div>
+</div>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+'use strict';
+// ---------- Konstanten ----------
+const PLATFORMS = {
+  instagram: { label: 'Instagram', url: (h) => `https://www.instagram.com/${h}/` },
+  tiktok: { label: 'TikTok', url: (h) => `https://www.tiktok.com/@${h}` },
+  youtube: { label: 'YouTube', url: (h) => `https://www.youtube.com/@${h}` },
+  snapchat: { label: 'Snapchat', url: (h) => `https://www.snapchat.com/add/${h}` },
+  twitch: { label: 'Twitch', url: (h) => `https://www.twitch.tv/${h}` },
+  x: { label: 'X / Twitter', url: (h) => `https://x.com/${h}` },
+  facebook: { label: 'Facebook', url: (h) => `https://www.facebook.com/${h}` },
+  other: { label: 'Andere', url: null },
+};
+const KINDS = {
+  follow: { label: 'folgt dem Konto', target: 'Konto, dem man folgen muss', ph: '@deinkonto' },
+  comment: { label: 'hat kommentiert', target: 'Link zum Beitrag', ph: 'https://…' },
+  like: { label: 'hat geliked', target: 'Link zum Beitrag', ph: 'https://…' },
+  tag: { label: 'hat Freunde markiert', target: 'Link zum Beitrag', ph: 'https://…' },
+  share: { label: 'hat geteilt / in Story gepostet', target: 'Beitrag oder Hinweis', ph: 'https://… oder Text' },
+  sub: { label: 'hat abonniert', target: 'Kanal', ph: '@deinkanal' },
+  custom: { label: 'Eigene Bedingung', target: 'Beschreibung', ph: 'z.B. hat den Newsletter abonniert' },
+};
+const HINTS = {
+  follow: {
+    instagram: 'Profil des Gewinners öffnen → „Gefolgt“ → nach dem Konto suchen. Ist das Profil privat: Follower-Liste deines Kontos öffnen und nach dem Gewinner suchen.',
+    tiktok: 'Profil des Gewinners → „Folge ich“ (falls öffentlich). Sonst in der Follower-Liste des Kontos suchen.',
+    snapchat: 'Snapchat zeigt keine Listen. Lass dir vom Gewinner einen Screenshot schicken.',
+    youtube: 'Abos sind auf YouTube meist privat. Lass dir einen Screenshot schicken.',
+    _: 'Profil des Gewinners öffnen und die „Folgt“-Liste prüfen, oder in der Follower-Liste des Kontos suchen.',
+  },
+  comment: { _: 'Beitrag öffnen und nach dem Namen des Gewinners in den Kommentaren suchen.' },
+  like: { _: 'Beitrag öffnen → „Gefällt“-Liste → nach dem Gewinner suchen. TikTok/YouTube zeigen keine Like-Listen: Screenshot anfordern.' },
+  tag: { _: 'Kommentar des Gewinners öffnen und prüfen, ob echte Konten markiert sind.' },
+  share: { _: 'Story/Repost prüfen oder Screenshot vom Gewinner anfordern (Stories verschwinden nach 24 h).' },
+  sub: { _: 'Abos sind meist privat. Lass dir einen Screenshot schicken.' },
+  custom: { _: 'Selbst prüfen.' },
+};
+
+// ---------- Hilfen ----------
+const $ = (s) => document.querySelector(s);
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const uid = () => Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4);
+const norm = (h) => String(h || '').trim().replace(/^@+/, '').toLowerCase();
+const safeUrl = (u) => (/^https:\/\//i.test(u) ? u : null);
+const fmtDate = (t) => new Date(t).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
+const fmtNum = (n) => n.toLocaleString('de-DE');
+function toast(msg) {
+  const t = $('#toast'); t.textContent = msg; t.hidden = false;
+  clearTimeout(toast.h); toast.h = setTimeout(() => (t.hidden = true), 2800);
+}
+function lsGet(k) { try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } }
+function lsSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch { /* egal */ } }
+
+// Gleichverteilte Zufallszahl 0..n-1 (Rejection Sampling, keine Modulo-Verzerrung)
+function randInt(n) {
+  const max = 0x100000000, lim = max - (max % n), b = new Uint32Array(1);
+  do crypto.getRandomValues(b); while (b[0] >= lim);
+  return b[0] % n;
+}
+
+// ---------- Zustand ----------
+const S = { list: [], cur: null, settings: { blacklist: [] }, filter: 'all', tab: 'rules' };
+function blankGiveaway() {
+  return {
+    id: uid(), title: 'Neues Gewinnspiel', prize: '', createdAt: Date.now(), done: false,
+    rules: { winners: 1, maxTickets: 1, word: '', minTags: 0, perComment: false, excludePrev: true },
+    conditions: [], entries: [], draws: [],
+  };
+}
+
+// ---------- Speicher: claude.ai-Datenbank (privat), sonst dieses Gerät ----------
+const store = {
+  db: null, base: null, mode: 'local', lastJson: {}, timers: {},
+  async init() {
+    let db = null, user = null;
+    try {
+      const timeout = new Promise((r) => setTimeout(() => r(null), 10000));
+      [db, user] = await Promise.race([Promise.all([window.claude?.use?.('db'), window.claude?.use?.('user')]), timeout.then(() => [null, null])]);
+    } catch { db = null; }
+    if (db && user) {
+      try {
+        const id = await user.id();
+        if (id) { this.db = db; this.base = `data/users/${id}`; this.mode = 'cloud'; }
+      } catch { /* lokal */ }
+    }
+  },
+  async loadAll() {
+    if (this.mode === 'cloud') {
+      try {
+        const snap = await this.db.collection(this.base + '/giveaways').get();
+        const list = [];
+        for (const d of snap.docs) {
+          const g = d.data();
+          if (!g) continue;
+          const chunks = await this.db.collection(`${this.base}/giveaways/${d.id}/chunks`).get();
+          g.entries = chunks.docs.map((c) => ({ n: Number(c.id), e: c.data()?.e || [] })).sort((a, b) => a.n - b.n).flatMap((c) => c.e);
+          list.push(g);
+        }
+        const st = await this.db.doc(this.base + '/settings/main').get();
+        return { list, settings: st.exists ? st.data() : null };
+      } catch (e) {
+        console.warn(e); this.mode = 'local';
+      }
+    }
+    return { list: lsGet('losfee.list') || [], settings: lsGet('losfee.settings') };
+  },
+  saveSoon(key, fn) {
+    clearTimeout(this.timers[key]);
+    setSave('pending');
+    this.timers[key] = setTimeout(() => fn().then(() => setSave('done')).catch((e) => { console.warn(e); setSave('error'); }), 700);
+  },
+  saveGiveaway(g) {
+    this.saveSoon('g' + g.id, async () => {
+      if (this.mode !== 'cloud') { lsSet('losfee.list', S.list); return; }
+      const { entries, ...meta } = g;
+      await this.writeIfChanged(`${this.base}/giveaways/${g.id}`, meta);
+      const size = 600, n = Math.ceil(entries.length / size);
+      for (let i = 0; i < n; i++) await this.writeIfChanged(`${this.base}/giveaways/${g.id}/chunks/${i}`, { e: entries.slice(i * size, (i + 1) * size) });
+      // überzählige Teile löschen
+      for (const p of Object.keys(this.lastJson)) {
+        const m = p.match(new RegExp(`/giveaways/${g.id}/chunks/(\\d+)$`));
+        if (m && Number(m[1]) >= n) { await this.db.doc(p).delete(); delete this.lastJson[p]; }
+      }
+    });
+  },
+  async writeIfChanged(path, data) {
+    const j = JSON.stringify(data);
+    if (this.lastJson[path] === j) return;
+    await this.db.doc(path).set(data);
+    this.lastJson[path] = j;
+  },
+  async deleteGiveaway(g) {
+    if (this.mode !== 'cloud') { lsSet('losfee.list', S.list); return; }
+    for (const p of Object.keys(this.lastJson)) if (p.includes(`/giveaways/${g.id}/chunks/`)) { await this.db.doc(p).delete(); delete this.lastJson[p]; }
+    const chunks = await this.db.collection(`${this.base}/giveaways/${g.id}/chunks`).get();
+    for (const c of chunks.docs) await this.db.doc(`${this.base}/giveaways/${g.id}/chunks/${c.id}`).delete();
+    await this.db.doc(`${this.base}/giveaways/${g.id}`).delete();
+  },
+  saveSettings() {
+    this.saveSoon('settings', async () => {
+      if (this.mode !== 'cloud') { lsSet('losfee.settings', S.settings); return; }
+      await this.writeIfChanged(this.base + '/settings/main', S.settings);
+    });
+  },
+  // nach dem Laden: bekannte Pfade merken, damit unveränderte Teile nicht neu geschrieben werden
+  remember(list, settings) {
+    if (this.mode !== 'cloud') return;
+    for (const g of list) {
+      const { entries, ...meta } = g;
+      this.lastJson[`${this.base}/giveaways/${g.id}`] = JSON.stringify(meta);
+      const size = 600;
+      for (let i = 0; i * size < entries.length; i++) this.lastJson[`${this.base}/giveaways/${g.id}/chunks/${i}`] = JSON.stringify({ e: entries.slice(i * size, (i + 1) * size) });
+    }
+    if (settings) this.lastJson[this.base + '/settings/main'] = JSON.stringify(settings);
+  },
+};
+function setSave(state) {
+  const el = $('#save');
+  const cloud = store.mode === 'cloud';
+  el.className = 'save ' + (state === 'error' ? 'local' : cloud ? 'ok' : 'local');
+  el.lastElementChild.textContent =
+    state === 'pending' ? 'Speichert …' :
+    state === 'error' ? 'Speichern fehlgeschlagen' :
+    cloud ? 'In deinem Konto gespeichert' : 'Nur auf diesem Gerät gespeichert';
+}
+const G = () => S.cur;
+function changed() { if (G()) store.saveGiveaway(G()); render(); }
+
+// ---------- Teilnehmer einlesen ----------
+const NAME_RE = /^@?([a-z0-9._-]{2,30})$/i;
+function parseLines(text) {
+  const rows = [], bad = [];
+  for (const raw of text.split(/\r?\n/)) {
+    const line = raw.trim();
+    if (!line) continue;
+    const m = line.match(/^(@?[^\s:]+):?\s*(.*)$/);
+    const nm = m && m[1].match(NAME_RE);
+    if (!nm) { bad.push(line); continue; }
+    rows.push({ h: nm[1].toLowerCase(), name: nm[1], text: (m[2] || '').slice(0, 300) });
+  }
+  return { rows, bad };
+}
+function importRows(rows, platform, source) {
+  const g = G(); let added = 0, merged = 0;
+  const idx = new Map(g.entries.map((e) => [e.p + ':' + e.h, e]));
+  for (const r of rows) {
+    const key = platform + ':' + r.h;
+    const ex = idx.get(key);
+    if (ex) {
+      ex.c += 1; merged++;
+      if (r.text) ex.t = (ex.t ? ex.t + ' ⏐ ' : '') + r.text;
+      ex.t = (ex.t || '').slice(0, 400);
+      if (source === 'comments') ex.s = 'comments';
+    } else {
+      const e = { h: r.h, n: r.name, p: platform, s: source, c: 1, t: r.text || '' };
+      g.entries.push(e); idx.set(key, e); added++;
+    }
+  }
+  return { added, merged };
+}
+
+// ---------- Prüfung ----------
+function prevWinners() {
+  const set = new Set();
+  for (const g of S.list) if (g.id !== G().id) for (const d of g.draws) if (d.status === 'won') set.add(d.p + ':' + d.h);
+  return set;
+}
+function evaluate(e, ctx) {
+  const r = G().rules, reasons = [];
+  if (ctx.block.has(e.h)) reasons.push('auf der Sperrliste');
+  if (r.excludePrev && ctx.prev.has(e.p + ':' + e.h)) reasons.push('hat schon früher gewonnen');
+  if (r.word) {
+    const ok = (e.t || '').toLowerCase().includes(r.word.toLowerCase());
+    if (!ok) reasons.push(`„${r.word}“ fehlt im Kommentar`);
+  }
+  if (r.minTags > 0) {
+    const tags = new Set(((e.t || '').match(/@[a-z0-9._-]{2,30}/gi) || []).map((x) => x.slice(1).toLowerCase()).filter((x) => x !== e.h));
+    if (tags.size < r.minTags) reasons.push(`nur ${tags.size} von ${r.minTags} Markierungen`);
+  }
+  const drawn = G().draws.find((d) => d.h === e.h && d.p === e.p);
+  if (drawn && drawn.status === 'out') reasons.push('disqualifiziert: ' + (drawn.reason || 'Bedingung nicht erfüllt'));
+  const tickets = Math.min(r.maxTickets || 1, r.perComment ? e.c : 1);
+  return { ok: reasons.length === 0, reasons, tickets };
+}
+function ctx() { return { block: new Set(S.settings.blacklist || []), prev: prevWinners() }; }
+function evaluated() { const c = ctx(); return G().entries.map((e) => ({ e, ...evaluate(e, c) })); }
+
+// Automatisch erfüllte Bedingungen (aus den eingefügten Kommentaren)
+function autoResult(cond, entry) {
+  if (cond.platform !== entry.p || entry.s !== 'comments') return null;
+  if (cond.kind === 'comment') return { ok: true, why: 'steht in den eingefügten Kommentaren' };
+  if (cond.kind === 'tag') {
+    const n = new Set(((entry.t || '').match(/@[a-z0-9._-]{2,30}/gi) || []).map((x) => x.toLowerCase()).filter((x) => x !== '@' + entry.h)).size;
+    return n > 0 ? { ok: true, why: `${n} Markierung${n > 1 ? 'en' : ''} im Kommentar` } : { ok: false, why: 'keine Markierung im Kommentar' };
+  }
+  return null;
+}
+const isAuto = (c) => c.kind === 'comment' || c.kind === 'tag';
+
+// ---------- Ziehung ----------
+function drawOne() {
+  const g = G();
+  const taken = new Set(g.draws.map((d) => d.p + ':' + d.h));
+  const pool = evaluated().filter((x) => x.ok && !taken.has(x.e.p + ':' + x.e.h));
+  const total = pool.reduce((a, x) => a + x.tickets, 0);
+  if (!total) return null;
+  const roll = randInt(total);
+  let acc = 0, pick = pool[0];
+  for (const x of pool) { acc += x.tickets; if (roll < acc) { pick = x; break; } }
+  const d = {
+    id: uid(), h: pick.e.h, n: pick.e.n, p: pick.e.p, at: Date.now(), roll: roll + 1, total, pool: pool.length,
+    tickets: pick.tickets, status: 'pending', checks: {}, handles: {}, reason: '',
+  };
+  for (const c of g.conditions) { const a = autoResult(c, pick.e); if (a) d.checks[c.id] = a.ok; }
+  g.draws.push(d);
+  return { d, names: pool.map((x) => x.e.n) };
+}
+
+// ---------- Bühne ----------
+let fxParts = [];
+function showStage(result) {
+  const g = G();
+  const st = $('#stage'); st.hidden = false;
+  $('#stTitle').textContent = g.title;
+  $('#stPrize').textContent = g.prize ? 'Preis: ' + g.prize : '';
+  const body = $('#stBody');
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const names = [];
+  for (let i = 0; i < 36; i++) names.push(result.names[randInt(result.names.length)]);
+  names.push(result.d.n);
+  body.innerHTML = '<div class="reelbox"><div class="reel" id="reel"></div></div><div class="lbl" style="margin-top:16px">wird gezogen …</div>';
+  const reel = $('#reel');
+  for (const n of names) { const div = document.createElement('div'); div.textContent = n; reel.appendChild(div); }
+  const finish = () => {
+    body.innerHTML = '';
+    const lbl = document.createElement('div'); lbl.className = 'lbl'; lbl.textContent = 'Gewinner';
+    const win = document.createElement('div'); win.className = 'win'; win.textContent = '@' + result.d.n;
+    const meta = document.createElement('div'); meta.className = 'meta';
+    meta.textContent = `${PLATFORMS[result.d.p]?.label || ''} · Los ${fmtNum(result.d.roll)} von ${fmtNum(result.d.total)}`;
+    body.append(lbl, win, meta);
+    if (!reduce) confetti();
+  };
+  if (reduce) return finish();
+  const h = reel.firstElementChild.getBoundingClientRect().height;
+  const target = (names.length - 1) * h, dur = 5200, t0 = performance.now();
+  const ease = (t) => 1 - Math.pow(1 - t, 4);
+  (function frame(now) {
+    const t = Math.min(1, (now - t0) / dur);
+    reel.style.transform = `translateY(${-ease(t) * target}px)`;
+    if (t < 1) requestAnimationFrame(frame); else setTimeout(finish, 350);
+  })(t0);
+}
+function confetti() {
+  const cv = $('#fx'), cx = cv.getContext('2d');
+  cv.width = innerWidth * devicePixelRatio; cv.height = innerHeight * devicePixelRatio;
+  cx.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
+  const cols = ['#ffc93c', '#6f8bff', '#4fd18b', '#ff7a72', '#ffffff'];
+  const start = fxParts.length === 0;
+  for (let i = 0; i < 180; i++) fxParts.push({ x: innerWidth / 2, y: innerHeight * 0.45, vx: (Math.random() - .5) * 18, vy: -Math.random() * 16 - 4, s: Math.random() * 6 + 4, c: cols[i % cols.length], a: Math.random() * 6, l: 0 });
+  if (!start) return;
+  (function tick() {
+    cx.clearRect(0, 0, innerWidth, innerHeight);
+    fxParts = fxParts.filter((p) => p.y < innerHeight + 20 && p.l < 260);
+    for (const p of fxParts) { p.l++; p.vy += .35; p.vx *= .99; p.x += p.vx; p.y += p.vy; p.a += .15;
+      cx.save(); cx.translate(p.x, p.y); cx.rotate(p.a); cx.fillStyle = p.c; cx.fillRect(-p.s / 2, -p.s / 4, p.s, p.s / 2); cx.restore(); }
+    if (fxParts.length) requestAnimationFrame(tick); else cx.clearRect(0, 0, innerWidth, innerHeight);
+  })();
+}
+
+// ---------- Rendering ----------
+function render() {
+  const g = G();
+  // Auswahl
+  const sel = $('#gsel');
+  sel.innerHTML = '';
+  for (const x of [...S.list].sort((a, b) => b.createdAt - a.createdAt)) {
+    const o = document.createElement('option'); o.value = x.id; o.textContent = `${x.title || 'Ohne Titel'} · ${fmtDate(x.createdAt)}`; sel.appendChild(o);
+  }
+  sel.value = g.id;
+  if (document.activeElement !== $('#gTitle')) $('#gTitle').value = g.title;
+  if (document.activeElement !== $('#gPrize')) $('#gPrize').value = g.prize;
+
+  const ev = evaluated();
+  const inn = ev.filter((x) => x.ok);
+  $('#sPeople').textContent = fmtNum(inn.length);
+  $('#sTickets').textContent = fmtNum(inn.reduce((a, x) => a + x.tickets, 0));
+  $('#sWinners').textContent = `${g.draws.filter((d) => d.status === 'won').length}/${g.rules.winners}`;
+
+  renderRules(); renderPeople(ev); renderDraw(inn); renderHist();
+}
+
+function renderRules() {
+  const g = G(), r = g.rules;
+  const box = $('#condList'); box.innerHTML = '';
+  if (!g.conditions.length) box.innerHTML = '<div class="empty small">Noch keine Bedingungen. Füge z.B. „Instagram · folgt dem Konto · @deinkonto“ hinzu.</div>';
+  for (const c of g.conditions) {
+    const row = document.createElement('div'); row.className = 'cond';
+    const plat = document.createElement('span'); plat.className = 'plat'; plat.textContent = PLATFORMS[c.platform].label;
+    const t = document.createElement('div'); t.className = 't';
+    const strong = document.createElement('div'); strong.textContent = KINDS[c.kind].label + (c.target ? ': ' + c.target : '');
+    const how = document.createElement('span'); how.className = 'how ' + (isAuto(c) ? 'auto' : 'man'); how.textContent = isAuto(c) ? 'automatisch' : 'beim Gewinner';
+    t.append(strong, how);
+    const del = document.createElement('button'); del.className = 'x'; del.textContent = '✕'; del.setAttribute('aria-label', 'Bedingung entfernen');
+    del.onclick = () => { g.conditions = g.conditions.filter((x) => x !== c); changed(); };
+    row.append(plat, t, del); box.appendChild(row);
+  }
+  const setVal = (id, v) => { const el = $(id); if (document.activeElement !== el) el.value = v; };
+  setVal('#rWinners', r.winners); setVal('#rMaxT', r.maxTickets); setVal('#rWord', r.word); setVal('#rTags', r.minTags);
+  $('#rPerComment').checked = r.perComment; $('#rPrev').checked = r.excludePrev;
+  $('#rMaxT').disabled = !r.perComment;
+  if (document.activeElement !== $('#rBlock')) $('#rBlock').value = (S.settings.blacklist || []).join('\n');
+}
+
+function renderPeople(ev) {
+  const q = norm($('#pSearch').value);
+  const list = ev.filter((x) => (S.filter === 'all' || (S.filter === 'in' ? x.ok : !x.ok)) && (!q || x.e.h.includes(q)));
+  const box = $('#pList'); box.innerHTML = '';
+  if (!G().entries.length) { box.innerHTML = '<div class="empty">Noch keine Teilnehmer. Füge oben Kommentare oder Namen ein.</div>'; return; }
+  if (!list.length) { box.innerHTML = '<div class="empty">Keine Treffer.</div>'; return; }
+  const frag = document.createDocumentFragment();
+  for (const x of list.slice(0, 400)) {
+    const row = document.createElement('div'); row.className = 'ent' + (x.ok ? '' : ' out');
+    const info = document.createElement('div'); info.style.minWidth = '0';
+    const n = document.createElement('div'); n.className = 'n'; n.textContent = '@' + x.e.n;
+    const sub = document.createElement('div'); sub.className = 'txt';
+    sub.textContent = `${PLATFORMS[x.e.p]?.label || ''} · ${x.e.c} Kommentar${x.e.c > 1 ? 'e' : ''}${x.e.t ? ' · ' + x.e.t : ''}`;
+    info.append(n, sub);
+    if (!x.ok) { const w = document.createElement('div'); w.className = 'why'; w.textContent = x.reasons.join(' · '); info.appendChild(w); }
+    const tix = document.createElement('span'); tix.className = 'tix'; tix.textContent = x.ok ? `${x.tickets} Los${x.tickets > 1 ? 'e' : ''}` : '0'; tix.title = 'Lose';
+    const del = document.createElement('button'); del.className = 'x'; del.textContent = '✕'; del.setAttribute('aria-label', '@' + x.e.n + ' entfernen');
+    del.onclick = () => { G().entries = G().entries.filter((e) => e !== x.e); changed(); };
+    row.append(info, tix, del); frag.appendChild(row);
+  }
+  box.appendChild(frag);
+  if (list.length > 400) { const m = document.createElement('div'); m.className = 'empty small'; m.textContent = `… und ${fmtNum(list.length - 400)} weitere (Suche nutzen)`; box.appendChild(m); }
+}
+
+function renderDraw(inn) {
+  const g = G();
+  const won = g.draws.filter((d) => d.status === 'won').length;
+  const pending = g.draws.find((d) => d.status === 'pending');
+  const taken = new Set(g.draws.map((d) => d.p + ':' + d.h));
+  const left = inn.filter((x) => !taken.has(x.e.p + ':' + x.e.h)).length;
+  const note = $('#drawNote');
+  note.className = 'note'; note.hidden = false;
+  if (!g.entries.length) note.textContent = 'Füge zuerst Teilnehmer ein.';
+  else if (pending) note.textContent = `Prüfe zuerst @${pending.n} unten, bevor du weiter ziehst.`;
+  else if (won >= g.rules.winners) { note.className = 'note ok'; note.textContent = `Fertig: alle ${g.rules.winners} Gewinner stehen fest.`; }
+  else if (!left) note.textContent = 'Keine gültigen Teilnehmer mehr übrig.';
+  else note.hidden = true;
+  $('#drawBtn').disabled = !left || !!pending || won >= g.rules.winners;
+  $('#drawBtn').textContent = won ? `Nächsten Gewinner ziehen (${won + 1}/${g.rules.winners})` : 'Gewinner ziehen';
+
+  const box = $('#winners'); box.innerHTML = '';
+  for (const d of [...g.draws].reverse()) box.appendChild(winnerCard(d));
+}
+
+function winnerCard(d) {
+  const g = G();
+  const card = document.createElement('div'); card.className = 'winner';
+  const head = document.createElement('div'); head.className = 'wh';
+  const h3 = document.createElement('h3'); h3.textContent = '@' + d.n;
+  const badge = document.createElement('span');
+  badge.className = 'badge ' + (d.status === 'won' ? 'won' : d.status === 'out' ? 'out' : 'pending');
+  badge.textContent = d.status === 'won' ? 'Gewinner bestätigt' : d.status === 'out' ? 'Disqualifiziert' : 'Wird geprüft';
+  const plat = document.createElement('span'); plat.className = 'plat'; plat.textContent = PLATFORMS[d.p]?.label || '';
+  head.append(h3, plat, badge); card.appendChild(head);
+
+  const entry = g.entries.find((e) => e.h === d.h && e.p === d.p);
+  if (d.status === 'out' && d.reason) { const r = document.createElement('div'); r.className = 'check'; r.textContent = 'Grund: ' + d.reason; card.appendChild(r); }
+
+  for (const c of g.conditions) {
+    const box = document.createElement('div'); box.className = 'check';
+    const q = document.createElement('div'); q.className = 'q';
+    const b = document.createElement('b'); b.textContent = `${PLATFORMS[c.platform].label}: ${KINDS[c.kind].label}${c.target ? ' (' + c.target + ')' : ''}`;
+    q.appendChild(b);
+    const auto = entry ? autoResult(c, entry) : null;
+    if (auto) {
+      const s = document.createElement('span'); s.className = 'badge ' + (auto.ok ? 'won' : 'out'); s.textContent = (auto.ok ? '✓ ' : '✗ ') + auto.why; q.appendChild(s);
+    } else {
+      const yn = document.createElement('div'); yn.className = 'yn';
+      const yes = document.createElement('button'); yes.textContent = 'Erfüllt'; if (d.checks[c.id] === true) yes.className = 'on-yes';
+      const no = document.createElement('button'); no.textContent = 'Nicht erfüllt'; if (d.checks[c.id] === false) no.className = 'on-no';
+      yes.disabled = no.disabled = d.status !== 'pending';
+      yes.onclick = () => { d.checks[c.id] = true; changed(); };
+      no.onclick = () => { d.checks[c.id] = false; changed(); };
+      yn.append(yes, no); q.appendChild(yn);
+    }
+    box.appendChild(q);
+    if (!auto) {
+      // Name des Gewinners auf dieser Plattform (kann abweichen)
+      const handle = d.handles[c.platform] || d.h;
+      const hint = document.createElement('div'); hint.className = 'muted small';
+      hint.textContent = (HINTS[c.kind][c.platform] || HINTS[c.kind]._);
+      const links = document.createElement('div'); links.className = 'links';
+      const P = PLATFORMS[c.platform];
+      if (P.url) { const a = document.createElement('a'); a.href = P.url(handle); a.target = '_blank'; a.rel = 'noopener'; a.textContent = `Profil @${handle} öffnen ↗`; links.appendChild(a); }
+      const tgt = safeUrl(c.target) || (P.url && c.target && /^@?[\w.-]+$/.test(c.target) ? P.url(norm(c.target)) : null);
+      if (tgt) { const a = document.createElement('a'); a.href = tgt; a.target = '_blank'; a.rel = 'noopener'; a.textContent = (safeUrl(c.target) ? 'Beitrag öffnen' : `Konto ${c.target} öffnen`) + ' ↗'; links.appendChild(a); }
+      box.append(hint, links);
+      if (c.platform !== d.p && d.status === 'pending') {
+        const hd = document.createElement('label'); hd.className = 'hand small muted';
+        hd.textContent = `Name auf ${P.label}:`;
+        const inp = document.createElement('input'); inp.value = handle; inp.setAttribute('aria-label', `Name des Gewinners auf ${P.label}`);
+        inp.onchange = () => { d.handles[c.platform] = norm(inp.value) || d.h; changed(); };
+        hd.appendChild(inp); box.appendChild(hd);
+      }
+    }
+    card.appendChild(box);
+  }
+
+  if (d.status === 'pending') {
+    const allSet = g.conditions.every((c) => { const a = entry ? autoResult(c, entry) : null; return a ? a.ok : d.checks[c.id] === true; });
+    const anyNo = g.conditions.some((c) => { const a = entry ? autoResult(c, entry) : null; return a ? !a.ok : d.checks[c.id] === false; });
+    const wf = document.createElement('div'); wf.className = 'wf';
+    const ok = document.createElement('button'); ok.className = 'primary'; ok.textContent = 'Gewinner bestätigen'; ok.disabled = !allSet;
+    ok.onclick = () => { d.status = 'won'; if (g.draws.filter((x) => x.status === 'won').length >= g.rules.winners) g.done = true; changed(); toast('@' + d.n + ' ist Gewinner'); };
+    const out = document.createElement('button'); out.className = 'danger'; out.textContent = 'Disqualifizieren & neu ziehen';
+    out.onclick = () => {
+      d.status = 'out';
+      d.reason = g.conditions.filter((c) => { const a = entry ? autoResult(c, entry) : null; return a ? !a.ok : d.checks[c.id] === false; })
+        .map((c) => `${PLATFORMS[c.platform].label}: ${KINDS[c.kind].label}`).join(', ') || 'manuell';
+      changed(); startDraw();
+    };
+    wf.append(ok, out);
+    if (!allSet && !anyNo && g.conditions.length) { const s = document.createElement('span'); s.className = 'muted small'; s.textContent = 'Erst alle Bedingungen abhaken.'; wf.appendChild(s); }
+    card.appendChild(wf);
+  }
+  if (d.status === 'won') {
+    const wf = document.createElement('div'); wf.className = 'wf';
+    const cp = document.createElement('button'); cp.className = 'sm'; cp.textContent = 'Glückwunsch-Text kopieren';
+    cp.onclick = () => {
+      const txt = `🎉 Gewinner von „${g.title}“${g.prize ? ' (' + g.prize + ')' : ''}: @${d.n}! Bitte melde dich per Direktnachricht. Gezogen aus ${fmtNum(d.total)} Losen.`;
+      navigator.clipboard.writeText(txt).then(() => toast('Kopiert'), () => toast(txt));
+    };
+    const again = document.createElement('button'); again.className = 'sm danger'; again.textContent = 'Doch nicht (meldet sich nicht)';
+    again.onclick = () => { d.status = 'out'; d.reason = 'hat sich nicht gemeldet'; g.done = false; changed(); };
+    wf.append(cp, again); card.appendChild(wf);
+  }
+  const audit = document.createElement('div'); audit.className = 'audit';
+  audit.textContent = `${new Date(d.at).toLocaleString('de-DE')} · Los ${fmtNum(d.roll)} von ${fmtNum(d.total)} · ${fmtNum(d.pool)} gültige Teilnehmer · ${d.tickets} Los${d.tickets > 1 ? 'e' : ''} von @${d.n}`;
+  card.appendChild(audit);
+  return card;
+}
+
+function renderHist() {
+  const box = $('#hist'); box.innerHTML = '';
+  const list = [...S.list].sort((a, b) => b.createdAt - a.createdAt);
+  for (const g of list) {
+    const row = document.createElement('div'); row.className = 'ent'; row.style.cursor = 'pointer';
+    const info = document.createElement('div'); info.style.minWidth = '0';
+    const n = document.createElement('div'); n.className = 'n'; n.textContent = g.title || 'Ohne Titel';
+    const sub = document.createElement('div'); sub.className = 'txt';
+    const w = g.draws.filter((d) => d.status === 'won').map((d) => '@' + d.n);
+    sub.textContent = `${fmtDate(g.createdAt)} · ${fmtNum(g.entries.length)} Teilnehmer · ${w.length ? 'Gewinner: ' + w.join(', ') : 'noch offen'}`;
+    info.append(n, sub);
+    const st = document.createElement('span'); st.className = 'badge ' + (g.done ? 'won' : 'pending'); st.textContent = g.done ? 'fertig' : 'offen';
+    row.append(info, st, document.createElement('span'));
+    row.onclick = () => { select(g.id); setTab('rules'); };
+    box.appendChild(row);
+  }
+}
+
+// ---------- Aktionen ----------
+function select(id) { S.cur = S.list.find((g) => g.id === id) || S.list[0]; lsSet('losfee.cur', S.cur.id); render(); }
+function setTab(t) {
+  S.tab = t;
+  for (const b of document.querySelectorAll('[role=tab]')) {
+    const on = b.id === 't-' + t; b.setAttribute('aria-selected', on);
+    $('#' + b.getAttribute('aria-controls')).hidden = !on;
+  }
+}
+function startDraw() {
+  const r = drawOne();
+  if (!r) { toast('Keine gültigen Teilnehmer mehr übrig'); render(); return; }
+  changed(); setTab('draw'); showStage(r);
+}
+
+function bind() {
+  for (const b of document.querySelectorAll('[role=tab]')) b.onclick = () => setTab(b.id.slice(2));
+  $('#gsel').onchange = (e) => select(e.target.value);
+  $('#newG').onclick = () => { const g = blankGiveaway(); S.list.push(g); S.cur = g; changed(); setTab('rules'); $('#gTitle').focus(); $('#gTitle').select(); };
+  $('#gTitle').oninput = (e) => { G().title = e.target.value.slice(0, 120); changed(); };
+  $('#gPrize').oninput = (e) => { G().prize = e.target.value.slice(0, 120); changed(); };
+
+  for (const [k, v] of Object.entries(PLATFORMS)) for (const sel of ['#cPlat', '#iPlat']) { const o = document.createElement('option'); o.value = k; o.textContent = v.label; $(sel).appendChild(o); }
+  for (const [k, v] of Object.entries(KINDS)) { const o = document.createElement('option'); o.value = k; o.textContent = v.label; $('#cKind').appendChild(o); }
+  const syncKind = () => { const k = KINDS[$('#cKind').value]; $('#cTargetLbl').textContent = k.target; $('#cTarget').placeholder = k.ph; };
+  $('#cKind').onchange = syncKind; syncKind();
+  $('#addCond').onclick = () => {
+    const target = $('#cTarget').value.trim().slice(0, 300);
+    G().conditions.push({ id: uid(), platform: $('#cPlat').value, kind: $('#cKind').value, target });
+    $('#cTarget').value = ''; changed(); toast('Bedingung hinzugefügt');
+  };
+
+  const num = (el, key, min, max) => { el.oninput = () => { const n = Math.floor(Number(el.value)); if (Number.isFinite(n) && n >= min && n <= max) { G().rules[key] = n; changed(); } }; };
+  num($('#rWinners'), 'winners', 1, 100); num($('#rMaxT'), 'maxTickets', 1, 100); num($('#rTags'), 'minTags', 0, 20);
+  $('#rWord').oninput = (e) => { G().rules.word = e.target.value.trim().slice(0, 60); changed(); };
+  $('#rPerComment').onchange = (e) => { G().rules.perComment = e.target.checked; if (e.target.checked && G().rules.maxTickets < 2) G().rules.maxTickets = 5; changed(); };
+  $('#rPrev').onchange = (e) => { G().rules.excludePrev = e.target.checked; changed(); };
+  $('#rBlock').oninput = (e) => { S.settings.blacklist = [...new Set(e.target.value.split(/[\s,;]+/).map(norm).filter(Boolean))]; store.saveSettings(); render(); };
+
+  $('#iGo').onclick = () => {
+    const { rows, bad } = parseLines($('#iText').value);
+    if (!rows.length) { $('#iInfo').textContent = 'Keine Namen erkannt. Jede Zeile muss mit dem Namen beginnen.'; return; }
+    const { added, merged } = importRows(rows, $('#iPlat').value, $('#iSrc').value);
+    $('#iText').value = '';
+    $('#iInfo').textContent = `${added} neu, ${merged} zusammengefasst${bad.length ? `, ${bad.length} Zeilen ohne erkennbaren Namen übersprungen` : ''}.`;
+    changed();
+  };
+  $('#clearPeople').onclick = () => { $('#clearAsk').hidden = false; };
+  $('#clearNo').onclick = () => { $('#clearAsk').hidden = true; };
+  $('#clearYes').onclick = () => { G().entries = []; G().draws = []; G().done = false; $('#clearAsk').hidden = true; changed(); };
+  for (const b of document.querySelectorAll('.filterbar [data-f]')) b.onclick = () => {
+    S.filter = b.dataset.f; for (const x of document.querySelectorAll('.filterbar [data-f]')) x.setAttribute('aria-pressed', x === b); render();
+  };
+  $('#pSearch').oninput = () => render();
+
+  $('#drawBtn').onclick = startDraw;
+  $('#stageClose').onclick = () => { $('#stage').hidden = true; render(); };
+
+  $('#delG').onclick = () => { $('#delAsk').hidden = false; };
+  $('#delNo').onclick = () => { $('#delAsk').hidden = true; };
+  $('#delYes').onclick = async () => {
+    const g = G(); $('#delAsk').hidden = true;
+    S.list = S.list.filter((x) => x !== g);
+    if (!S.list.length) S.list.push(blankGiveaway());
+    S.cur = S.list[S.list.length - 1];
+    try { await store.deleteGiveaway(g); } catch (e) { console.warn(e); }
+    changed(); toast('Gelöscht');
+  };
+}
+
+// ---------- Beispiel für den ersten Start (klar als Beispiel markiert) ----------
+function example() {
+  const g = blankGiveaway();
+  S.cur = g;
+  g.title = 'Beispiel: 10k-Gewinnspiel'; g.prize = 'Gaming-Headset';
+  g.rules = { winners: 1, maxTickets: 1, word: '', minTags: 1, perComment: false, excludePrev: true };
+  g.conditions = [
+    { id: uid(), platform: 'instagram', kind: 'follow', target: '@deinkonto' },
+    { id: uid(), platform: 'instagram', kind: 'comment', target: '' },
+    { id: uid(), platform: 'instagram', kind: 'tag', target: '' },
+    { id: uid(), platform: 'tiktok', kind: 'follow', target: '@deinkonto' },
+  ];
+  const sample = `@beispiel_lisa Ich will gewinnen! @beispiel_tom
+@beispiel_tom wäre so cool @beispiel_anna @beispiel_kim
+beispiel_max.power nimm mich 🙏
+@beispiel_jule @beispiel_lisa @beispiel_ben
+@beispiel_lisa nochmal ich @beispiel_ben`;
+  importRows(parseLines(sample).rows, 'instagram', 'comments');
+  return g;
+}
+
+// ---------- Start ----------
+(async function boot() {
+  bind();
+  await store.init();
+  const { list, settings } = await store.loadAll();
+  S.list = list || [];
+  S.settings = { blacklist: [], ...(settings || {}) };
+  store.remember(S.list, settings);
+  if (!S.list.length) { S.list.push(example()); S.cur = S.list[0]; store.saveGiveaway(S.cur); }
+  const last = lsGet('losfee.cur');
+  S.cur = S.list.find((g) => g.id === last) || [...S.list].sort((a, b) => b.createdAt - a.createdAt)[0];
+  setSave('done');
+  render();
+})();
+</script>
+
+</body>
+</html>
