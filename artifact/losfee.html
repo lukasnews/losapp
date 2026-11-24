@@ -156,13 +156,38 @@ section[role=tabpanel] { display: flex; flex-direction: column; gap: 14px; }
 .toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(env(safe-area-inset-bottom, 0px) + 16px); z-index: 60; background: var(--ink); color: var(--bg); padding: 10px 16px; border-radius: 10px; font-size: 14px; max-width: calc(100vw - 32px); }
 .confirmbar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; padding: 10px 12px; border-radius: 10px; background: var(--bad-bg); color: var(--bad); font-size: 14px; }
 details summary { cursor: pointer; font-weight: 600; }
+.wrap.locked > :not(.top):not(#auth) { display: none !important; }
+#auth { max-width: 420px; width: 100%; margin: 0 auto; }
+.acct { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; justify-content: flex-end; }
+.acct span { font-size: 12px; color: var(--muted); overflow-wrap: anywhere; }
+.linkbtn { border: 0; background: none; color: var(--accent); min-height: 0; padding: 4px 0; font-weight: 500; }
+.err { color: var(--bad); font-size: 13px; }
 </style>
 
 <div class="wrap">
   <div class="top">
     <div class="brand"><div class="logo" aria-hidden="true">L</div><h1>Losfee</h1></div>
-    <div class="save" id="save"><i></i><span>Lädt …</span></div>
+    <div class="acct">
+      <div class="save" id="save"><i></i><span>Lädt …</span></div>
+      <span id="acctMail" hidden></span>
+      <button class="sm" id="logout" hidden>Abmelden</button>
+      <button class="sm" id="loginOpen" hidden>Anmelden &amp; synchronisieren</button>
+    </div>
   </div>
+
+  <form class="panel" id="auth" hidden novalidate>
+    <h2 id="authTitle">Anmelden</h2>
+    <p class="muted small">Mit einem Konto sind deine Gewinnspiele auf allen Geräten gleich (Handy, PC).</p>
+    <label class="f">E-Mail<input id="aMail" type="email" autocomplete="email" required></label>
+    <label class="f">Passwort<input id="aPw" type="password" autocomplete="current-password" minlength="6" required></label>
+    <div class="err" id="aErr" role="alert"></div>
+    <button class="primary" type="submit" id="aGo">Anmelden</button>
+    <div class="row" style="justify-content:space-between">
+      <button type="button" class="linkbtn" id="aSwitch">Neues Konto erstellen</button>
+      <button type="button" class="linkbtn" id="aReset">Passwort vergessen?</button>
+    </div>
+    <button type="button" class="ghost sm" id="aLocal">Ohne Konto nutzen (nur auf diesem Gerät)</button>
+  </form>
 
   <div class="panel head">
     <div class="row">
@@ -284,6 +309,10 @@ details summary { cursor: pointer; font-weight: 600; }
 
 <script>
 'use strict';
+// ---------- Firebase (E-Mail/Passwort-Login + Sync). null = kein Login, nur Gerätespeicher ----------
+const FIREBASE_CONFIG = null;
+const FIREBASE_VERSION = '10.12.2';
+
 // ---------- Konstanten ----------
 const PLATFORMS = {
   instagram: { label: 'Instagram', url: (h) => `https://www.instagram.com/${h}/` },
@@ -352,7 +381,56 @@ function blankGiveaway() {
   };
 }
 
-// ---------- Speicher: claude.ai-Datenbank (privat), sonst dieses Gerät ----------
+// ---------- Firebase ----------
+const fb = {
+  ready: null, auth: null, user: null, m: null,
+  async load() {
+    if (!FIREBASE_CONFIG) return false;
+    this.ready ??= (async () => {
+      const u = `https://www.gstatic.com/firebasejs/${FIREBASE_VERSION}/`;
+      const [app, auth, fs] = await Promise.all([import(u + 'firebase-app.js'), import(u + 'firebase-auth.js'), import(u + 'firebase-firestore.js')]);
+      const a = app.initializeApp(FIREBASE_CONFIG);
+      this.m = { ...auth, ...fs };
+      this.auth = auth.getAuth(a);
+      this.fs = fs.getFirestore(a);
+      await auth.setPersistence(this.auth, auth.browserLocalPersistence);
+      this.user = await new Promise((r) => { const off = auth.onAuthStateChanged(this.auth, (x) => { off(); r(x); }); });
+      return true;
+    })();
+    try { return await this.ready; } catch (e) { console.warn('Firebase nicht ladbar', e); return false; }
+  },
+  // gleiche Form wie claude.use('db'): doc(path).get/set/delete, collection(path).get
+  dbApi() {
+    const { doc, getDoc, setDoc, deleteDoc, collection, getDocs } = this.m, fs = this.fs;
+    return {
+      doc: (p) => ({
+        get: async () => { const s = await getDoc(doc(fs, p)); return { id: s.id, exists: s.exists(), data: () => s.data() }; },
+        set: (d) => setDoc(doc(fs, p), JSON.parse(JSON.stringify(d))),
+        delete: () => deleteDoc(doc(fs, p)),
+      }),
+      collection: (p) => ({
+        get: async () => { const s = await getDocs(collection(fs, p)); return { docs: s.docs.map((d) => ({ id: d.id, data: () => d.data() })) }; },
+      }),
+    };
+  },
+};
+const AUTH_ERR = {
+  'auth/invalid-credential': 'E-Mail oder Passwort falsch.',
+  'auth/wrong-password': 'E-Mail oder Passwort falsch.',
+  'auth/user-not-found': 'Zu dieser E-Mail gibt es kein Konto.',
+  'auth/email-already-in-use': 'Für diese E-Mail gibt es schon ein Konto. Melde dich an.',
+  'auth/weak-password': 'Das Passwort braucht mindestens 6 Zeichen.',
+  'auth/invalid-email': 'Das ist keine gültige E-Mail-Adresse.',
+  'auth/missing-password': 'Bitte ein Passwort eingeben.',
+  'auth/too-many-requests': 'Zu viele Versuche. Warte kurz und versuche es erneut.',
+  'auth/network-request-failed': 'Keine Verbindung. Prüfe dein Internet.',
+  'auth/unauthorized-domain': 'Diese Adresse ist in Firebase nicht freigegeben (Authentication → Einstellungen → Autorisierte Domains).',
+  'auth/operation-not-allowed': 'E-Mail/Passwort-Login ist in Firebase noch nicht aktiviert.',
+};
+const authMsg = (e) => AUTH_ERR[e?.code] ||
+  (String(e?.code).startsWith('auth/api-key-not-valid') ? 'Die Firebase-Konfiguration stimmt nicht (apiKey).' : 'Fehler: ' + (e?.code || e?.message || e));
+
+// ---------- Speicher: claude.ai-Datenbank oder Firebase (privat), sonst dieses Gerät ----------
 const store = {
   db: null, base: null, mode: 'local', lastJson: {}, timers: {},
   async init() {
@@ -364,8 +442,12 @@ const store = {
     if (db && user) {
       try {
         const id = await user.id();
-        if (id) { this.db = db; this.base = `data/users/${id}`; this.mode = 'cloud'; }
-      } catch { /* lokal */ }
+        if (id) { this.db = db; this.base = `data/users/${id}`; this.mode = 'cloud'; return; }
+      } catch { /* weiter */ }
+    }
+    if (await fb.load()) {
+      this.provider = 'firebase';
+      if (fb.user) { this.db = fb.dbApi(); this.base = `users/${fb.user.uid}`; this.mode = 'cloud'; }
     }
   },
   async loadAll() {
@@ -877,13 +959,70 @@ beispiel_max.power nimm mich 🙏
 }
 
 // ---------- Start ----------
+function showAuth(on) {
+  $('#auth').hidden = !on;
+  document.querySelector('.wrap').classList.toggle('locked', on);
+  if (on) setTimeout(() => $('#aMail').focus(), 50);
+}
+function bindAuth() {
+  let mode = 'login';
+  const sync = () => {
+    $('#authTitle').textContent = mode === 'login' ? 'Anmelden' : 'Konto erstellen';
+    $('#aGo').textContent = mode === 'login' ? 'Anmelden' : 'Konto erstellen';
+    $('#aSwitch').textContent = mode === 'login' ? 'Neues Konto erstellen' : 'Ich habe schon ein Konto';
+    $('#aPw').autocomplete = mode === 'login' ? 'current-password' : 'new-password';
+    $('#aErr').textContent = '';
+  };
+  $('#aSwitch').onclick = () => { mode = mode === 'login' ? 'signup' : 'login'; sync(); };
+  $('#auth').addEventListener('submit', async (ev) => {
+    ev.preventDefault();
+    const mail = $('#aMail').value.trim(), pw = $('#aPw').value;
+    if (!mail || !pw) { $('#aErr').textContent = 'Bitte E-Mail und Passwort eingeben.'; return; }
+    $('#aErr').textContent = ''; $('#aGo').disabled = true;
+    try {
+      const f = mode === 'login' ? fb.m.signInWithEmailAndPassword : fb.m.createUserWithEmailAndPassword;
+      await f(fb.auth, mail, pw);
+      lsSet('losfee.noAccount', false);
+      location.reload();
+    } catch (e) { $('#aErr').textContent = authMsg(e); }
+    $('#aGo').disabled = false;
+  });
+  $('#aReset').onclick = async () => {
+    const mail = $('#aMail').value.trim();
+    if (!mail) { $('#aErr').textContent = 'Gib zuerst deine E-Mail ein.'; return; }
+    try { await fb.m.sendPasswordResetEmail(fb.auth, mail); $('#aErr').textContent = ''; toast('E-Mail zum Zurücksetzen gesendet'); }
+    catch (e) { $('#aErr').textContent = authMsg(e); }
+  };
+  $('#aLocal').onclick = () => { lsSet('losfee.noAccount', true); showAuth(false); $('#loginOpen').hidden = false; };
+  $('#loginOpen').onclick = () => showAuth(true);
+  $('#logout').onclick = async () => { await fb.m.signOut(fb.auth); location.reload(); };
+}
+
 (async function boot() {
   bind();
   await store.init();
+  if (store.provider === 'firebase') {
+    bindAuth();
+    if (fb.user) {
+      $('#acctMail').textContent = fb.user.email || ''; $('#acctMail').hidden = false; $('#logout').hidden = false;
+    } else if (lsGet('losfee.noAccount')) $('#loginOpen').hidden = false;
+    else showAuth(true);
+  }
   const { list, settings } = await store.loadAll();
   S.list = list || [];
   S.settings = { blacklist: [], ...(settings || {}) };
   store.remember(S.list, settings);
+  // Erster Login: Gewinnspiele von diesem Gerät ins Konto übernehmen
+  if (store.mode === 'cloud' && store.provider === 'firebase' && !S.list.length) {
+    const local = (lsGet('losfee.list') || []).filter((g) => !/^Beispiel/.test(g.title));
+    if (local.length) {
+      S.list = local;
+      const ls = lsGet('losfee.settings'); if (ls) S.settings = { blacklist: [], ...ls };
+      for (const g of S.list) store.saveGiveaway(g);
+      store.saveSettings();
+      toast(`${local.length} Gewinnspiel(e) von diesem Gerät ins Konto übernommen`);
+    }
+  }
   if (!S.list.length) { S.list.push(example()); S.cur = S.list[0]; store.saveGiveaway(S.cur); }
   const last = lsGet('losfee.cur');
   S.cur = S.list.find((g) => g.id === last) || [...S.list].sort((a, b) => b.createdAt - a.createdAt)[0];
