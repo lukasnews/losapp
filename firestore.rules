@@ -5,5 +5,16 @@ service cloud.firestore {
     match /users/{uid}/{document=**} {
       allow read, write: if request.auth != null && request.auth.uid == uid;
     }
+
+    // Instagram-Brücke (Cloudflare Worker): darf ohne Login NUR neue Einträge in den
+    // Posteingang legen, und nur mit dem geheimen Schlüssel aus users/{uid}/private/inbox
+    match /users/{uid}/inbox/{msgId} {
+      allow create: if request.auth == null
+        && request.resource.data.keys().hasOnly(['key', 'platform', 'h', 'name', 'text', 'follows', 'src', 'at'])
+        && request.resource.data.key is string
+        && request.resource.data.key == get(/databases/$(database)/documents/users/$(uid)/private/inbox).data.key
+        && request.resource.data.h is string && request.resource.data.h.size() <= 40
+        && request.resource.data.text is string && request.resource.data.text.size() <= 500;
+    }
   }
 }

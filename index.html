@@ -351,6 +351,43 @@ details summary { cursor: pointer; font-weight: 600; }
       </details>
     </div>
 
+    <div class="panel" id="igPanel">
+      <div class="row" style="justify-content:space-between"><h2>Live-Teilnahme: Instagram</h2><span class="badge" id="igState">aus</span></div>
+      <p class="muted small">Zuschauer schicken dem Streamer das Stichwort per Instagram-DM, z.B. „LOS“. Instagram meldet offiziell, ob die Person folgt, und sie ist sofort dabei.</p>
+      <div class="note" id="igNeedLogin" hidden>Dafür musst du in Losfee mit deinem Konto angemeldet sein.</div>
+      <div class="grid2">
+        <label class="f">Instagram-Name des Streamers<input id="igAcc" placeholder="@streamername" autocomplete="off"></label>
+        <label class="f">Stichwort in der DM<input id="igKw" placeholder="LOS (leer = jede Nachricht)" autocomplete="off"></label>
+      </div>
+      <label class="c"><input type="checkbox" id="igReply"><span>Automatisch per DM antworten <span class="muted small">(„Du bist dabei“ oder „Bitte erst folgen“)</span></span></label>
+      <label class="c"><input type="checkbox" id="igOnlyFollow"><span>Nur Follower zählen <span class="muted small">(legt die Regel „Instagram · folgt dem Konto“ an)</span></span></label>
+      <label class="f">Adresse deines Workers<input id="igWorker" placeholder="https://losfee-ig.deinname.workers.dev" autocomplete="off" inputmode="url"></label>
+      <div class="row">
+        <button class="primary" id="igListen">Empfang starten</button>
+        <button class="sm" id="igTest">Verbindung prüfen</button>
+        <span class="muted small" id="igInfo"></span>
+      </div>
+      <div class="list" id="igFeedBox" hidden><div class="scroll" id="igFeed" style="max-height:220px"></div></div>
+      <details id="igSetup">
+        <summary>Einrichtung (einmalig, ca. 30 Minuten)</summary>
+        <ol class="small" style="display:flex;flex-direction:column;gap:12px;padding-left:20px;margin:12px 0 0">
+          <li><b>Profi-Konto:</b> In Instagram unter Einstellungen → Kontoart und Tools auf <b>Creator- oder Business-Konto</b> umstellen (falls noch nicht).</li>
+          <li><b>Meta-App anlegen:</b> developers.facebook.com öffnen, mit dem Facebook-Konto anmelden → <b>Meine Apps → App erstellen</b> → Anwendungsfall „Mit Kunden auf Instagram kommunizieren“ bzw. „Instagram API“ wählen.</li>
+          <li><b>Instagram verbinden:</b> In der App unter <b>Instagram → API-Einrichtung mit Instagram-Login</b> das Instagram-Konto des Streamers hinzufügen und einen <b>Zugriffsschlüssel (Access Token) generieren</b>. Kopieren und sicher aufheben. Auf derselben Seite steht der <b>Instagram-App-Geheimcode</b>, den brauchst du auch.</li>
+          <li><b>Worker-Code kopieren:</b> Losfee erzeugt den fertigen Code mit deinen Werten.
+            <div class="row" style="margin-top:6px"><button class="sm primary" id="igCopyCode">Worker-Code kopieren</button></div>
+            <div class="muted" style="margin-top:6px">Verify-Token für Schritt 6: <span class="mono" id="igVerify">wird beim Kopieren erzeugt</span> <button class="sm" id="igCopyVerify" hidden>kopieren</button></div>
+          </li>
+          <li><b>Cloudflare-Worker:</b> dash.cloudflare.com → kostenlos registrieren → <b>Workers &amp; Pages → Erstellen → Worker</b> → Name z.B. <span class="mono">losfee-ig</span> → <b>Bereitstellen</b> → <b>Code bearbeiten</b> → alles ersetzen durch den kopierten Code → <b>Bereitstellen</b>. Dann unter <b>Einstellungen → Variablen und Geheimnisse</b> zwei Geheimnisse anlegen: <span class="mono">IG_TOKEN</span> (Zugriffsschlüssel aus Schritt 3) und <span class="mono">APP_SECRET</span> (App-Geheimcode). Die Worker-Adresse oben in Losfee eintragen.</li>
+          <li><b>Webhook bei Meta:</b> In der App unter Instagram → API-Einrichtung → <b>Webhooks konfigurieren</b>: Callback-URL <span class="mono" id="igHook">https://…workers.dev/webhook</span> <button class="sm" id="igCopyHook">kopieren</button>, Verify-Token aus Schritt 4. Dann das Feld <b>messages</b> abonnieren (und <b>live_comments</b>, falls angeboten).</li>
+          <li><b>Konto für Nachrichten anmelden:</b> <button class="sm" id="igSubscribe">Instagram-Konto verbinden</button> <span class="muted" id="igSubInfo"></span></li>
+          <li><b>Sicherheitsregeln bei Firebase:</b> console.firebase.google.com → Firestore Database → <b>Regeln</b> → alles ersetzen → <b>Veröffentlichen</b>. <button class="sm" id="igCopyRules">Regeln kopieren</button></li>
+          <li><b>Live schalten:</b> In der Meta-App unter Einstellungen → Allgemein als Datenschutz-URL <span class="mono">https://lukasnews.github.io/losapp/datenschutz.html</span> eintragen (Kontaktdaten dort vorher anpassen) und die App oben auf <b>Live</b> stellen.</li>
+          <li><b>Testen:</b> Hier auf „Empfang starten“, dann von einem <i>anderen</i> Instagram-Konto „LOS“ an den Streamer schreiben. Erscheint der Name nicht, verlangt Meta vermutlich eine <b>App-Prüfung</b> für Nachrichten von fremden Konten (Tage bis Wochen). Bis dahin klappt es nur mit Konten, die in der App als Tester eingetragen sind.</li>
+        </ol>
+      </details>
+    </div>
+
     <div class="panel">
       <h2>Teilnehmer einfügen</h2>
       <p class="muted small">Kopiere Kommentare oder Chat-Namen und füge sie hier ein. Eine Zeile pro Kommentar, der Name zuerst: <span class="mono">@lisa_m mega! @tom @anna</span>. Doppelte Namen werden zusammengefasst.</p>
@@ -528,6 +565,9 @@ const fb = {
       }),
       collection: (p) => ({
         get: async () => { const s = await getDocs(collection(fs, p)); return { docs: s.docs.map((d) => ({ id: d.id, data: () => d.data() })) }; },
+        onAdded: (cb, onErr) => this.m.onSnapshot(collection(fs, p), (snap) => {
+          for (const ch of snap.docChanges()) if (ch.type === 'added') cb({ id: ch.doc.id, data: ch.doc.data() });
+        }, onErr),
       }),
     };
   },
@@ -745,8 +785,8 @@ function evaluate(e, ctx) {
     const tags = new Set(((e.t || '').match(/@[a-z0-9._-]{2,30}/gi) || []).map((x) => x.slice(1).toLowerCase()).filter((x) => x !== e.h));
     if (tags.size < r.minTags) reasons.push(`nur ${tags.size} von ${r.minTags} Markierungen`);
   }
-  if (followMode() === 'exclude' && e.p === 'tiktok' && e.lf === false && G().conditions.some((c) => c.kind === 'follow' && c.platform === 'tiktok')) {
-    reasons.push('folgt nicht auf TikTok (live gemeldet)');
+  if (followMode() === 'exclude' && e.lf === false && G().conditions.some((c) => c.kind === 'follow' && c.platform === e.p)) {
+    reasons.push(`folgt nicht auf ${PLATFORMS[e.p]?.label} (live gemeldet)`);
   } else if (followMode() === 'exclude') for (const c of G().conditions) {
     const fl = followersFor(c);
     if (fl && !fl.names.has(e.h)) reasons.push(`folgt nicht${c.target ? ' ' + c.target : ''} auf ${PLATFORMS[c.platform].label}`);
@@ -869,9 +909,10 @@ const EXPORT_HELP = {
 
 // Automatisch erfüllte Bedingungen (aus den eingefügten Kommentaren oder der Follower-Liste)
 function autoResult(cond, entry) {
-  if (cond.kind === 'follow' && cond.platform === 'tiktok' && entry.p === 'tiktok' && typeof entry.lf === 'boolean') {
-    if (entry.lf) return { ok: true, why: 'folgt (live von TikTok gemeldet)' };
-    if (followMode() !== 'winner') return { ok: false, why: 'folgt nicht (live von TikTok gemeldet)' };
+  if (cond.kind === 'follow' && cond.platform === entry.p && typeof entry.lf === 'boolean') {
+    const src = PLATFORMS[entry.p]?.label || '';
+    if (entry.lf) return { ok: true, why: `folgt (live von ${src} gemeldet)` };
+    if (followMode() !== 'winner') return { ok: false, why: `folgt nicht (live von ${src} gemeldet)` };
   }
   if (cond.kind === 'follow') {
     const fl = followersFor(cond);
@@ -888,7 +929,7 @@ function autoResult(cond, entry) {
   }
   return null;
 }
-const isAuto = (c) => c.kind === 'comment' || c.kind === 'tag' || Boolean(followersFor(c)) || (c.kind === 'follow' && c.platform === 'tiktok' && G().entries.some((e) => typeof e.lf === 'boolean'));
+const isAuto = (c) => c.kind === 'comment' || c.kind === 'tag' || Boolean(followersFor(c)) || (c.kind === 'follow' && G().entries.some((e) => e.p === c.platform && typeof e.lf === 'boolean'));
 
 // ---------- Ziehung ----------
 function drawOne(items) {
@@ -1107,6 +1148,14 @@ function renderLive() {
   const c = ttCfg();
   for (const [id, v] of [['#ttUser', c.user ? '@' + c.user : ''], ['#ttKey', c.key], ['#ttApi', c.api]]) if (document.activeElement !== $(id) && !$(id).value) $(id).value = v || '';
   $('#ttOnlyFollow').checked = G().conditions.some((x) => x.kind === 'follow' && x.platform === 'tiktok');
+  const i = igCfg();
+  for (const [id, v] of [['#igAcc', i.acc ? '@' + i.acc : ''], ['#igKw', i.kw], ['#igWorker', i.worker]]) if (document.activeElement !== $(id) && !$(id).value) $(id).value = v || '';
+  $('#igReply').checked = i.reply !== false;
+  $('#igOnlyFollow').checked = G().conditions.some((x) => x.kind === 'follow' && x.platform === 'instagram');
+  const cloud = store.mode === 'cloud' && store.provider === 'firebase';
+  $('#igNeedLogin').hidden = cloud;
+  $('#igListen').disabled = !cloud;
+  if (igWorker()) $('#igHook').textContent = igWorker() + '/webhook';
 }
 
 function renderPeople(ev) {
@@ -1123,7 +1172,7 @@ function renderPeople(ev) {
     const sub = document.createElement('div'); sub.className = 'txt';
     sub.textContent = `${PLATFORMS[x.e.p]?.label || ''} · ${x.e.c} Kommentar${x.e.c > 1 ? 'e' : ''}${x.e.t ? ' · ' + x.e.t : ''}`;
     info.append(n, sub);
-    if (typeof x.e.lf === 'boolean') { const w = document.createElement('div'); w.className = 'txt'; w.textContent = x.e.lf ? 'TikTok LIVE: folgt ✓' : 'TikTok LIVE: folgt nicht'; info.appendChild(w); }
+    if (typeof x.e.lf === 'boolean') { const w = document.createElement('div'); w.className = 'txt'; w.textContent = `${PLATFORMS[x.e.p]?.label} live: ${x.e.lf ? 'folgt ✓' : 'folgt nicht'}`; info.appendChild(w); }
     if (x.ok && x.also?.length) { const w = document.createElement('div'); w.className = 'txt'; w.textContent = 'auch dabei auf ' + x.also.join(', '); info.appendChild(w); }
     if (!x.ok) { const w = document.createElement('div'); w.className = 'why'; w.textContent = x.reasons.join(' · '); info.appendChild(w); }
     if (bonuses(G()).length && !x.dup) {
@@ -1466,12 +1515,106 @@ function ttDisconnect(silent) {
   $('#ttConnect').textContent = 'Verbinden'; ttSetState('getrennt');
   if (!silent) $('#ttInfo').textContent = `Getrennt. ${fmtNum(tt.joined)} Teilnehmer wurden aufgenommen.`;
 }
-function syncOnlyFollow(on) {
-  const g = G(), user = norm($('#ttUser').value) || ttCfg().user;
-  const ex = g.conditions.find((c) => c.kind === 'follow' && c.platform === 'tiktok');
-  if (on && !ex) g.conditions.push({ id: uid(), platform: 'tiktok', kind: 'follow', target: user ? '@' + user : '' });
+function syncOnlyFollow(on, platform = 'tiktok', user = norm($('#ttUser').value) || ttCfg().user) {
+  const g = G();
+  const ex = g.conditions.find((c) => c.kind === 'follow' && c.platform === platform);
+  if (on && !ex) g.conditions.push({ id: uid(), platform, kind: 'follow', target: user ? '@' + user : '' });
   if (!on && ex) g.conditions = g.conditions.filter((c) => c !== ex);
   changed();
+}
+
+// ---------- Instagram LIVE (offiziell, über Cloudflare-Worker) ----------
+const ig = { unsub: null, count: 0, joined: 0, feed: [], priv: null };
+const igCfg = () => (S.settings.ig ||= { acc: '', kw: 'LOS', reply: true, worker: '' });
+const igWorker = () => (igCfg().worker || '').trim().replace(/\/+$/, '');
+const rnd = (n) => [...crypto.getRandomValues(new Uint8Array(n))].map((b) => b.toString(16).padStart(2, '0')).join('');
+function igSaveCfg() {
+  const c = igCfg();
+  c.acc = norm($('#igAcc').value); c.kw = $('#igKw').value.trim().slice(0, 30); c.reply = $('#igReply').checked;
+  c.worker = $('#igWorker').value.trim();
+  store.saveSettings(); renderLive();
+}
+function igSetState(t, cls) { const b = $('#igState'); b.textContent = t; b.className = 'badge ' + (cls || ''); }
+async function igPrivate(create) {
+  if (store.mode !== 'cloud' || store.provider !== 'firebase') throw new Error('Dafür musst du in Losfee angemeldet sein.');
+  if (ig.priv) return ig.priv;
+  const ref = store.db.doc(store.base + '/private/inbox');
+  const snap = await ref.get();
+  if (snap.exists && snap.data()?.key) return (ig.priv = snap.data());
+  if (!create) return null;
+  const priv = { key: rnd(24), verify: rnd(12) };
+  await ref.set(priv);
+  return (ig.priv = priv);
+}
+const jsStr = (v) => String(v ?? '').replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/[\r\n]+/g, ' ');
+async function igWorkerCode() {
+  const priv = await igPrivate(true);
+  const r = await fetch('worker/instagram-worker.js', { cache: 'no-store' });
+  if (!r.ok) throw new Error('Worker-Vorlage nicht gefunden');
+  const c = igCfg();
+  const vals = {
+    __FIREBASE_PROJECT__: FIREBASE_CONFIG.projectId, __FIREBASE_API_KEY__: FIREBASE_CONFIG.apiKey, __LOSFEE_UID__: fb.user.uid,
+    __INBOX_KEY__: priv.key, __VERIFY_TOKEN__: priv.verify, __KEYWORD__: c.kw, __ACCOUNT__: c.acc, __REPLY__: c.reply ? 'ja' : 'nein',
+  };
+  let code = await r.text();
+  for (const [k, v] of Object.entries(vals)) code = code.split(k).join(jsStr(v));
+  return code;
+}
+async function copyText(text, okMsg) {
+  try { await navigator.clipboard.writeText(text); toast(okMsg); }
+  catch { toast('Kopieren nicht möglich. Bitte manuell markieren.'); }
+}
+function igProcess(doc) {
+  const d = doc.data || {};
+  const h = String(d.h || '').toLowerCase();
+  if (!G() || !NAME_RE.test(h)) return false;
+  const existed = G().entries.some((e) => e.p === 'instagram' && e.h === h);
+  importRows([{ h, name: d.name || h, text: String(d.text || '').slice(0, 300) }], 'instagram', d.src === 'live' || d.src === 'comment' ? 'comments' : 'dm');
+  const e = G().entries.find((x) => x.p === 'instagram' && x.h === h);
+  if (e && typeof d.follows === 'boolean') e.lf = d.follows;
+  ig.count++; if (!existed) ig.joined++;
+  const only = G().conditions.some((x) => x.kind === 'follow' && x.platform === 'instagram');
+  ig.feed.unshift({ name: d.name || h, comment: (d.src === 'dm' ? 'DM: ' : 'Kommentar: ') + (d.text || ''), status: d.follows, only });
+  ig.feed.length = Math.min(ig.feed.length, 40);
+  const box = $('#igFeed'); $('#igFeedBox').hidden = false; box.innerHTML = '';
+  for (const f of ig.feed) {
+    const row = document.createElement('div'); row.className = 'feed';
+    const n = document.createElement('b'); n.textContent = '@' + f.name;
+    const c = document.createElement('span'); c.className = 'c'; c.textContent = f.comment;
+    const st = document.createElement('span'); st.className = 's ' + (f.status === true ? 'ok' : f.status === false ? 'no' : 'in');
+    st.textContent = f.status === true ? '✓ dabei · Follower' : f.status === false ? (f.only ? 'kein Follower · zählt nicht' : 'dabei · kein Follower') : 'dabei · Follow unbekannt';
+    row.append(n, c, st); box.appendChild(row);
+  }
+  $('#igInfo').textContent = `${fmtNum(ig.count)} Nachrichten empfangen · ${fmtNum(ig.joined)} neu dabei`;
+  liveChanged();
+  return true;
+}
+async function igStart() {
+  try { await igPrivate(false); } catch (e) { $('#igInfo').textContent = e.message; return; }
+  if (ig.unsub) return;
+  ig.count = 0; ig.joined = 0;
+  const inbox = store.db.collection(store.base + '/inbox');
+  ig.unsub = inbox.onAdded(async (doc) => {
+    if (igProcess(doc)) { try { await store.db.doc(store.base + '/inbox/' + doc.id).delete(); } catch (e) { console.warn(e); } }
+  }, (err) => { igStop(); $('#igInfo').textContent = 'Empfang unterbrochen: ' + (err.code || err.message); });
+  lsSet('losfee.igListen', true);
+  igSetState('empfängt', 'live'); $('#igListen').textContent = 'Empfang stoppen';
+  $('#igInfo').textContent = 'Warte auf Nachrichten …';
+}
+function igStop() {
+  if (ig.unsub) { try { ig.unsub(); } catch { /* egal */ } ig.unsub = null; }
+  lsSet('losfee.igListen', false);
+  igSetState('aus'); $('#igListen').textContent = 'Empfang starten';
+}
+async function igCall(path, method = 'GET') {
+  const w = igWorker();
+  if (!/^https:\/\//.test(w)) throw new Error('Trage zuerst die Worker-Adresse ein (beginnt mit https://).');
+  const priv = await igPrivate(false);
+  if (!priv) throw new Error('Kopiere zuerst den Worker-Code (Schritt 4).');
+  const r = await fetch(`${w}${path}?key=${encodeURIComponent(priv.key)}`, { method });
+  const d = await r.json().catch(() => null);
+  if (!d) throw new Error(`Der Worker antwortet nicht richtig (HTTP ${r.status}). Ist die Adresse korrekt und der Code bereitgestellt?`);
+  return d;
 }
 
 // ---------- Aktionen ----------
@@ -1566,6 +1709,42 @@ function bind() {
   $('#pSearch').oninput = () => render();
   $('#ttConnect').onclick = () => (tt.ws ? ttDisconnect() : ttConnect());
   $('#ttOnlyFollow').onchange = (e) => syncOnlyFollow(e.target.checked);
+  $('#igOnlyFollow').onchange = (e) => syncOnlyFollow(e.target.checked, 'instagram', norm($('#igAcc').value) || igCfg().acc);
+  for (const id of ['#igAcc', '#igKw', '#igWorker']) $(id).onchange = igSaveCfg;
+  $('#igReply').onchange = igSaveCfg;
+  $('#igListen').onclick = () => (ig.unsub ? igStop() : igStart());
+  $('#igCopyCode').onclick = async () => {
+    igSaveCfg();
+    try {
+      const code = await igWorkerCode();
+      $('#igVerify').textContent = ig.priv.verify; $('#igCopyVerify').hidden = false;
+      await copyText(code, 'Worker-Code kopiert');
+    } catch (e) { toast(e.message); }
+  };
+  $('#igCopyVerify').onclick = () => ig.priv && copyText(ig.priv.verify, 'Verify-Token kopiert');
+  $('#igCopyHook').onclick = () => igWorker() ? copyText(igWorker() + '/webhook', 'Callback-URL kopiert') : toast('Trage zuerst die Worker-Adresse ein');
+  $('#igCopyRules').onclick = async () => {
+    try { const r = await fetch('firestore.rules', { cache: 'no-store' }); await copyText(await r.text(), 'Regeln kopiert'); }
+    catch { toast('Regeln konnten nicht geladen werden'); }
+  };
+  $('#igTest').onclick = async () => {
+    igSaveCfg(); $('#igInfo').textContent = 'Prüfe …';
+    try {
+      const d = await igCall('/status');
+      const parts = [];
+      parts.push(d.tokenSet ? (d.account ? `✓ verbunden mit @${d.account}` : `✗ Zugriffsschlüssel ungültig${d.tokenError ? ': ' + d.tokenError : ''}`) : '✗ IG_TOKEN fehlt in Cloudflare');
+      parts.push(d.secretSet ? '✓ App-Geheimcode gesetzt' : '✗ APP_SECRET fehlt in Cloudflare');
+      if ((d.keyword || '') !== (igCfg().kw || '')) parts.push(`Stichwort im Worker ist „${d.keyword}“: Code neu kopieren und bereitstellen`);
+      $('#igInfo').textContent = parts.join(' · ');
+    } catch (e) { $('#igInfo').textContent = e.message; }
+  };
+  $('#igSubscribe').onclick = async () => {
+    $('#igSubInfo').textContent = 'Verbinde …';
+    try {
+      const d = await igCall('/subscribe', 'POST');
+      $('#igSubInfo').textContent = d.ok ? (d.onlyMessages ? '✓ verbunden (nur DMs; Live-Kommentare brauchen eine Freigabe von Meta)' : '✓ verbunden (DMs und Live-Kommentare)') : '✗ ' + (d.error || d.result?.error?.message || 'fehlgeschlagen');
+    } catch (e) { $('#igSubInfo').textContent = '✗ ' + e.message; }
+  };
   for (const id of ['#ttUser', '#ttKey', '#ttApi']) $(id).onchange = () => { const c = ttCfg(); c.user = norm($('#ttUser').value); c.key = $('#ttKey').value.trim().slice(0, 30); c.api = $('#ttApi').value.trim(); store.saveSettings(); };
   $('#iMode').onchange = () => render();
 
@@ -1694,6 +1873,7 @@ function bindAuth() {
   S.cur = S.list.find((g) => g.id === last) || [...S.list].sort((a, b) => b.createdAt - a.createdAt)[0];
   setSave('done');
   render();
+  if (lsGet('losfee.igListen') && store.mode === 'cloud') igStart();
 })();
 </script>
 
