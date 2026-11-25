@@ -95,12 +95,12 @@ test/               Tests der Verlosungslogik
 
 ## Losfee (Gewinnspiel-Seite für alle Plattformen)
 
-Läuft auf GitHub Pages: **https://lukasnews.github.io/losapp/** (Quelle: `index.html` im Branch `main`).
+Läuft auf GitHub Pages: **https://lukasnews.github.io/losapp/** (Quelle: `index.html` im Branch `main`). Aktueller Stand und offene Punkte: siehe `HANDOFF.md`.
 
-- Login mit E-Mail/Passwort und Sync zwischen Geräten über Firebase (Projekt `losfee-fd3ce`, Regeln in `firestore.rules`); ohne Login wird nur im Browser gespeichert
-- Teilnehmer per Kopieren & Einfügen aus Kommentaren oder Chat, doppelte Namen werden zusammengefasst
-- Automatische Prüfung: Pflichtwort, markierte Freunde, Sperrliste, frühere Gewinner, „hat kommentiert“
-- Follower-Abgleich über den offiziellen Daten-Export von Instagram/TikTok (ZIP, JSON, HTML oder Textliste)
-- Mehrfach-Teilnahme einstellbar, Bonus-Lose (+X / ×X), Preise mit Bestand und Kombis
-- Faire, gewichtete Ziehung (Web Crypto) im Vollbild mit Protokoll (Los X von Y)
-- Was keine Plattform herausgibt (Likes, Stories, Follows bei Snapchat/YouTube), wird beim Gewinner mit Direktlinks abgehakt
+- Login mit E-Mail/Passwort und Sync über Firebase (Projekt `losfee-fd3ce`, Regeln in `firestore.rules`)
+- Live-Teilnahme: TikTok LIVE (mit Follower-Status pro Kommentar), Instagram per DM (offizieller Follower-Check über `worker/instagram-worker.js`), YouTube Live-Chat und Video-Kommentare, Teilnahme-Link `mitmachen.html` für Snapchat und alle anderen
+- Gemeinsame Live-Eingangsliste, Bühne mit Walzen-Ziehung, animierten Prüfschritten und grünem Hintergrund für OBS
+- Follower-Abgleich über den offiziellen Daten-Export von Instagram/TikTok, YouTube-Abonnenten über Google-Login
+- Mehrfach-Teilnahme einstellbar, Bonus-Lose (+X / ×X), Preise mit Bestand und Kombis, Sperrliste
+- Faire, gewichtete Ziehung (Web Crypto) mit Protokoll (Los X von Y)
+- Rechtliches (Vorlagen): `teilnahmebedingungen.html`, `datenschutz.html`, `impressum.html`

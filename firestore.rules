@@ -16,5 +16,29 @@ service cloud.firestore {
         && request.resource.data.h is string && request.resource.data.h.size() <= 40
         && request.resource.data.text is string && request.resource.data.text.size() <= 500;
     }
+
+    // Teilnahme-Link: Titel/Preis/Bedingungen sind öffentlich lesbar, ändern darf nur der Besitzer
+    match /public/{pid} {
+      allow read: if true;
+      allow create: if request.auth != null && request.resource.data.owner == request.auth.uid;
+      allow update: if request.auth != null && resource.data.owner == request.auth.uid
+        && request.resource.data.owner == request.auth.uid;
+      allow delete: if request.auth != null && resource.data.owner == request.auth.uid;
+
+      // Zuschauer dürfen sich eintragen (nur neu anlegen, ein Eintrag pro Name und Plattform),
+      // solange die Teilnahme offen ist. Lesen und löschen nur der Besitzer.
+      match /entries/{eid} {
+        allow create: if get(/databases/$(database)/documents/public/$(pid)).data.open == true
+          && request.resource.data.keys().hasOnly(['platform', 'h', 'name', 'text', 'at'])
+          && request.resource.data.platform in get(/databases/$(database)/documents/public/$(pid)).data.platforms
+          && request.resource.data.h is string && request.resource.data.h.matches('^[a-z0-9._-]{2,30}$')
+          && eid == request.resource.data.platform + '_' + request.resource.data.h
+          && request.resource.data.name is string && request.resource.data.name.size() <= 40
+          && request.resource.data.text is string && request.resource.data.text.size() <= 300
+          && request.resource.data.at == request.time;
+        allow read, delete: if request.auth != null
+          && get(/databases/$(database)/documents/public/$(pid)).data.owner == request.auth.uid;
+      }
+    }
   }
 }

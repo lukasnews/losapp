@@ -155,10 +155,29 @@ section[role=tabpanel] { display: flex; flex-direction: column; gap: 14px; }
 .stage .lbl { font: 600 13px var(--body); letter-spacing: .2em; text-transform: uppercase; opacity: .7; }
 .stage .win { font: 800 clamp(34px, 9vw, 96px)/1.05 var(--display); color: var(--ticket); overflow-wrap: anywhere; animation: pop .5s cubic-bezier(.2,1.5,.4,1); }
 .stage .meta { font: 500 14px var(--mono); opacity: .65; }
-.stage .close { position: absolute; top: calc(env(safe-area-inset-top, 0px) + 12px); right: max(12px, env(safe-area-inset-right, 0px)); background: rgba(255,255,255,.1); color: #fff; border-color: rgba(255,255,255,.2); }
+.stctl { position: absolute; top: calc(env(safe-area-inset-top, 0px) + 12px); right: max(12px, env(safe-area-inset-right, 0px)); left: max(12px, env(safe-area-inset-left, 0px)); display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; z-index: 2; }
+.stctl button { background: rgba(255,255,255,.12); color: #fff; border-color: rgba(255,255,255,.25); }
+.stctl button[aria-pressed=true] { background: #fff; color: #0f1120; }
+.stage.green { background: #00b140; }
+.stage.green .win, .stage.green .prz { color: #fff; text-shadow: 0 2px 0 rgba(0,0,0,.35); }
+.stage.green .reelbox { background: rgba(0,0,0,.35); }
+.stchecks { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; width: min(92vw, 640px); text-align: left; }
+.stchecks li { display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: 10px; align-items: start; background: rgba(255,255,255,.1); border-radius: 12px; padding: 10px 12px; font: 600 16px/1.35 var(--body); animation: pop .35s ease-out; }
+.stchecks .st { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; font-weight: 800; background: #fff; color: #0f1120; }
+.stchecks .ok .st { background: #4fd18b; } .stchecks .fail .st { background: #ff6b63; color: #fff; } .stchecks .manual .st { background: var(--ticket); }
+.stchecks .wait .st { background: rgba(255,255,255,.35); animation: blink 1s infinite; }
+.stchecks small { display: block; font-weight: 500; font-size: 13px; opacity: .8; }
+.stlink { display: inline-block; margin-top: 6px; color: #fff; font-size: 14px; font-weight: 700; text-decoration: underline; }
+.stverdict { margin: 0; font: 800 clamp(20px, 4vw, 30px)/1.2 var(--display); }
+.stacts { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+.stacts button { background: transparent; color: #fff; border-color: #fff; min-height: 48px; padding: 10px 18px; font-size: 16px; }
+.stacts button.solid { background: #fff; color: #0f1120; }
+.stacts button.go { background: var(--ticket); border-color: var(--ticket); color: var(--ticket-ink); font: 800 20px var(--display); min-height: 60px; padding: 12px 28px; }
+.stcount { font: 600 clamp(16px, 3vw, 22px) var(--body); opacity: .85; }
+@keyframes blink { 50% { opacity: .35; } }
 .stage canvas { position: absolute; inset: 0; pointer-events: none; width: 100%; height: 100%; }
 @keyframes pop { from { transform: scale(.6); opacity: 0; } }
-@media (prefers-reduced-motion: reduce) { .stage .win { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .stage .win, .stchecks li, .stchecks .wait .st { animation: none; } }
 
 .toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(env(safe-area-inset-bottom, 0px) + 16px); z-index: 60; background: var(--ink); color: var(--bg); padding: 10px 16px; border-radius: 10px; font-size: 14px; max-width: calc(100vw - 32px); }
 .confirmbar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; padding: 10px 12px; border-radius: 10px; background: var(--bad-bg); color: var(--bad); font-size: 14px; }
@@ -189,6 +208,10 @@ details summary { cursor: pointer; font-weight: 600; }
 .feed .s { font-size: 11px; font-weight: 600; padding: 2px 6px; border-radius: 99px; white-space: nowrap; }
 .feed .s.ok { background: var(--ok-bg); color: var(--ok); } .feed .s.no { background: var(--bad-bg); color: var(--bad); } .feed .s.in { background: var(--warn-bg); color: var(--warn); }
 .badge.live { background: var(--ok-bg); color: var(--ok); }
+.feed { grid-template-columns: auto auto minmax(0, 1fr) auto; }
+.ptag { font: 700 11px/1 var(--body); padding: 4px 6px; border-radius: 5px; color: #fff; background: #555; white-space: nowrap; }
+.ptag.tiktok { background: #111; box-shadow: 0 0 0 1px rgba(255,255,255,.25); } .ptag.instagram { background: #c13584; } .ptag.youtube { background: #e00; }
+.ptag.snapchat { background: #fffc00; color: #141414; } .ptag.twitch { background: #9146ff; } .ptag.facebook { background: #1877f2; } .ptag.x { background: #000; }
 .bon { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
 .bon button { min-height: 30px; padding: 4px 9px; font-size: 12px; border-radius: 99px; }
 .bon button[aria-pressed=true] { background: var(--ticket); border-color: var(--ticket); color: var(--ticket-ink); }
@@ -290,6 +313,7 @@ details summary { cursor: pointer; font-weight: 600; }
         <option value="winner">nur beim Gewinner von Hand prüfen</option>
       </select></label>
       <label class="c"><input type="checkbox" id="rPrev"><span>Gewinner früherer Gewinnspiele ausschließen</span></label>
+      <div class="row"><button class="sm" id="copyNotice">Hinweistext für den Beitrag kopieren</button><span class="muted small">kostenlos, Teilnahmebedingungen, „keine Verbindung zu Instagram & Co.“</span></div>
       <label class="f">Sperrliste (gilt für alle Gewinnspiele)<textarea id="rBlock" style="min-height:70px" placeholder="ein Name pro Zeile, z.B. Fake-Konten"></textarea></label>
     </div>
     <div class="panel">
@@ -331,6 +355,10 @@ details summary { cursor: pointer; font-weight: 600; }
 
   <!-- Teilnehmer -->
   <section role="tabpanel" id="p-people" aria-labelledby="t-people" hidden>
+    <div class="panel feedpanel" hidden>
+      <div class="row" style="justify-content:space-between"><h2>Eingang live</h2><span class="muted small feedcount"></span></div>
+      <div class="list"><div class="scroll livefeed" style="max-height:300px"></div></div>
+    </div>
     <div class="panel" id="livePanel">
       <div class="row" style="justify-content:space-between"><h2>Live-Teilnahme: TikTok</h2><span class="badge" id="ttState">getrennt</span></div>
       <p class="muted small">Während du auf TikTok live bist, liest die App den Chat mit. Wer das Stichwort schreibt, ist sofort dabei, und TikTok meldet bei jedem Kommentar, ob die Person dir folgt.</p>
@@ -345,7 +373,6 @@ details summary { cursor: pointer; font-weight: 600; }
         <button class="primary" id="ttConnect">Verbinden</button>
         <span class="muted small" id="ttInfo"></span>
       </div>
-      <div class="list" id="ttFeedBox" hidden><div class="scroll" id="ttFeed" style="max-height:220px"></div></div>
       <details class="small"><summary>So bekommst du den Schlüssel</summary>
         <p class="muted" style="margin-top:6px">Auf eulerstream.com ein kostenloses Konto anlegen und im Dashboard einen API-Key erstellen. Der Schlüssel wird nur in deinem Konto bei Losfee gespeichert. Gib ihn nicht weiter: Wer ihn hat, kann dein Euler-Kontingent nutzen.</p>
       </details>
@@ -367,7 +394,6 @@ details summary { cursor: pointer; font-weight: 600; }
         <button class="sm" id="igTest">Verbindung prüfen</button>
         <span class="muted small" id="igInfo"></span>
       </div>
-      <div class="list" id="igFeedBox" hidden><div class="scroll" id="igFeed" style="max-height:220px"></div></div>
       <details id="igSetup">
         <summary>Einrichtung (einmalig, ca. 30 Minuten)</summary>
         <ol class="small" style="display:flex;flex-direction:column;gap:12px;padding-left:20px;margin:12px 0 0">
@@ -386,6 +412,49 @@ details summary { cursor: pointer; font-weight: 600; }
           <li><b>Testen:</b> Hier auf „Empfang starten“, dann von einem <i>anderen</i> Instagram-Konto „LOS“ an den Streamer schreiben. Erscheint der Name nicht, verlangt Meta vermutlich eine <b>App-Prüfung</b> für Nachrichten von fremden Konten (Tage bis Wochen). Bis dahin klappt es nur mit Konten, die in der App als Tester eingetragen sind.</li>
         </ol>
       </details>
+    </div>
+
+    <div class="panel" id="ytPanel">
+      <div class="row" style="justify-content:space-between"><h2>YouTube</h2><span class="badge" id="ytState">aus</span></div>
+      <p class="muted small">Offiziell über die YouTube-Schnittstelle: Live-Chat mitlesen oder alle Kommentare eines Videos laden. Beim Gewinner prüft die App, ob sein Kommentar noch da ist.</p>
+      <div class="grid2">
+        <label class="f">Video- oder Live-Link<input id="ytVideo" placeholder="https://youtube.com/live/…" autocomplete="off" inputmode="url"></label>
+        <label class="f">Stichwort (nur Live-Chat)<input id="ytKw" placeholder="z.B. !los (leer = jede Nachricht)" autocomplete="off"></label>
+      </div>
+      <label class="f">YouTube-API-Schlüssel<input id="ytKey" type="password" placeholder="aus der Google Cloud Console" autocomplete="off"></label>
+      <div class="row">
+        <button class="primary" id="ytLive">Live-Chat verbinden</button>
+        <button id="ytComments">Kommentare des Videos laden</button>
+      </div>
+      <div class="muted small" id="ytInfo"></div>
+      <details class="small">
+        <summary>Einrichtung (einmalig, ca. 10 Minuten)</summary>
+        <ol style="display:flex;flex-direction:column;gap:10px;padding-left:20px;margin:10px 0 0">
+          <li>console.cloud.google.com öffnen, mit dem Google-Konto anmelden und ein <b>Projekt erstellen</b>, z.B. „Losfee“.</li>
+          <li><b>APIs &amp; Dienste → Bibliothek</b> → „YouTube Data API v3“ suchen → <b>Aktivieren</b>.</li>
+          <li><b>APIs &amp; Dienste → Anmeldedaten → Anmeldedaten erstellen → API-Schlüssel</b>. Dann den Schlüssel <b>einschränken</b>: Websites <span class="mono">https://lukasnews.github.io/*</span> und nur „YouTube Data API v3“. Schlüssel oben eintragen.</li>
+          <li><b>Nur für die Abo-Prüfung:</b> „OAuth-Zustimmungsbildschirm“ einrichten (Extern, Testmodus, das Google-Konto des Kanals als Testnutzer eintragen). Dann <b>Anmeldedaten → OAuth-Client-ID → Webanwendung</b>, autorisierte JavaScript-Quelle <span class="mono">https://lukasnews.github.io</span>. Client-ID hier eintragen:
+            <input id="ytClient" placeholder="….apps.googleusercontent.com" autocomplete="off" style="margin-top:6px"></li>
+          <li>Gratis sind 10.000 Einheiten pro Tag. Live-Chat kostet 5 pro Abruf (alle 6 Sekunden, reicht für gut 3 Stunden Live pro Tag), Kommentare laden 1 pro 100 Kommentare.</li>
+        </ol>
+      </details>
+    </div>
+
+    <div class="panel" id="fmPanel">
+      <div class="row" style="justify-content:space-between"><h2>Teilnahme-Link</h2><span class="badge" id="fmState">kein Link</span></div>
+      <p class="muted small">Ein Link, unter dem Zuschauer selbst ihren Namen eintragen. Ideal für die <b>Snapchat-Story</b>, wo es keine Schnittstelle gibt, und für jede andere Plattform. Ob jemand folgt, prüfst du beim Gewinner.</p>
+      <div class="note" id="fmNeedLogin" hidden>Dafür musst du in Losfee mit deinem Konto angemeldet sein.</div>
+      <div class="eyebrow">Plattformen im Formular</div>
+      <div class="chips" id="fmPlats"></div>
+      <div class="row" id="fmLinkRow" hidden>
+        <input id="fmLink" readonly class="mono" style="flex:1 1 220px;width:auto" aria-label="Teilnahme-Link">
+        <button class="sm" id="fmCopy">Kopieren</button>
+      </div>
+      <div class="row">
+        <button class="primary" id="fmCreate">Link erstellen</button>
+        <button id="fmToggle" hidden>Teilnahme schließen</button>
+        <span class="muted small" id="fmInfo"></span>
+      </div>
     </div>
 
     <div class="panel">
@@ -424,7 +493,12 @@ details summary { cursor: pointer; font-weight: 600; }
       </div>
       <div id="drawNote"></div>
       <button class="ticket big" id="drawBtn">Gewinner ziehen</button>
+      <button id="stageOpen">Bühne / OBS-Ansicht öffnen</button>
       <p class="muted small">Gezogen wird mit dem Zufallsgenerator des Browsers (kryptografisch sicher), gewichtet nach Losen. Die Ziehung öffnet sich im Vollbild. So kannst du sie im Stream zeigen (Bildschirm teilen oder Fenster aufnehmen).</p>
+    </div>
+    <div class="panel feedpanel" hidden>
+      <div class="row" style="justify-content:space-between"><h2>Eingang live</h2><span class="muted small feedcount"></span></div>
+      <div class="list"><div class="scroll livefeed" style="max-height:260px"></div></div>
     </div>
     <div id="winners" style="display:flex;flex-direction:column;gap:12px"></div>
   </section>
@@ -446,10 +520,16 @@ details summary { cursor: pointer; font-weight: 600; }
 
 <div class="stage" id="stage" hidden>
   <canvas id="fx"></canvas>
-  <button class="close sm" id="stageClose">Schließen</button>
+  <div class="stctl">
+    <button class="sm" id="stageGreen" aria-pressed="false">Grüner Hintergrund (OBS)</button>
+    <button class="sm" id="stageClose">Schließen</button>
+  </div>
   <div class="ttl" id="stTitle"></div>
   <div class="prz" id="stPrize"></div>
   <div id="stBody"></div>
+  <ul class="stchecks" id="stChecks"></ul>
+  <p class="stverdict" id="stVerdict" hidden></p>
+  <div class="stacts" id="stActs"></div>
 </div>
 <div class="toast" id="toast" hidden></div>
 <input type="file" id="flFile" accept=".zip,.json,.html,.htm,.txt,.csv,application/zip,application/json,text/html,text/plain,text/csv" hidden>
@@ -511,6 +591,7 @@ const norm = (h) => String(h || '').trim().replace(/^@+/, '').toLowerCase();
 const safeUrl = (u) => (/^https:\/\//i.test(u) ? u : null);
 const fmtDate = (t) => new Date(t).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
 const fmtNum = (n) => n.toLocaleString('de-DE');
+const lose = (n) => `${fmtNum(n)} Los${n === 1 ? '' : 'e'}`;
 function toast(msg) {
   const t = $('#toast'); t.textContent = msg; t.hidden = false;
   clearTimeout(toast.h); toast.h = setTimeout(() => (t.hidden = true), 2800);
@@ -548,6 +629,11 @@ const fb = {
       this.m = { ...auth, ...fs };
       this.auth = auth.getAuth(a);
       this.fs = fs.getFirestore(a);
+      // Nur für lokale Tests: ?emu=1 verbindet mit dem Firebase-Emulator
+      if (location.hostname === 'localhost' && new URLSearchParams(location.search).has('emu')) {
+        fs.connectFirestoreEmulator(this.fs, '127.0.0.1', 8089);
+        auth.connectAuthEmulator(this.auth, 'http://127.0.0.1:9099', { disableWarnings: true });
+      }
       await auth.setPersistence(this.auth, auth.browserLocalPersistence);
       this.user = await new Promise((r) => { const off = auth.onAuthStateChanged(this.auth, (x) => { off(); r(x); }); });
       return true;
@@ -789,7 +875,7 @@ function evaluate(e, ctx) {
     reasons.push(`folgt nicht auf ${PLATFORMS[e.p]?.label} (live gemeldet)`);
   } else if (followMode() === 'exclude') for (const c of G().conditions) {
     const fl = followersFor(c);
-    if (fl && !fl.names.has(e.h)) reasons.push(`folgt nicht${c.target ? ' ' + c.target : ''} auf ${PLATFORMS[c.platform].label}`);
+    if (fl && !inList(fl, e)) reasons.push(`${c.kind === 'sub' ? 'kein Abo' : 'folgt nicht'}${c.target ? ' ' + c.target : ''} auf ${PLATFORMS[c.platform].label}`);
   }
   const drawn = G().draws.find((d) => d.h === e.h && d.p === e.p);
   if (drawn && drawn.status === 'out') reasons.push('disqualifiziert: ' + (drawn.reason || 'Bedingung nicht erfüllt'));
@@ -833,8 +919,9 @@ function evaluated() {
 
 // ---------- Follower-Listen (offizieller Daten-Export von Instagram / TikTok) ----------
 const fmtDay = (t) => new Date(t).toLocaleDateString('de-DE');
+const inList = (fl, e) => fl.names.has(e.h) || Boolean(e.yc && fl.names.has(String(e.yc).toLowerCase()));
 function followersFor(cond) {
-  if (cond.kind !== 'follow') return null;
+  if (cond.kind !== 'follow' && cond.kind !== 'sub') return null;
   const acc = norm(cond.target);
   const lists = Object.values(S.followers).filter((f) => f.platform === cond.platform && (!acc || !f.account || f.account === acc));
   return lists.sort((a, b) => b.date - a.date)[0] || null;
@@ -914,10 +1001,10 @@ function autoResult(cond, entry) {
     if (entry.lf) return { ok: true, why: `folgt (live von ${src} gemeldet)` };
     if (followMode() !== 'winner') return { ok: false, why: `folgt nicht (live von ${src} gemeldet)` };
   }
-  if (cond.kind === 'follow') {
+  if (cond.kind === 'follow' || cond.kind === 'sub') {
     const fl = followersFor(cond);
     if (!fl) return null;
-    if (fl.names.has(entry.h)) return { ok: true, why: `steht in der Follower-Liste (Stand ${fmtDay(fl.date)})` };
+    if (inList(fl, entry)) return { ok: true, why: `steht in der ${cond.kind === 'sub' ? 'Abonnenten' : 'Follower'}-Liste (Stand ${fmtDay(fl.date)})` };
     if (followMode() === 'winner') return null;
     return { ok: false, why: `nicht in der Follower-Liste (Stand ${fmtDay(fl.date)})` };
   }
@@ -954,13 +1041,39 @@ function drawOne(items) {
 
 // ---------- Bühne ----------
 let fxParts = [];
-function showStage(result) {
+const reduceMotion = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+const stage = { d: null, run: 0 };
+function stageClear() { $('#stChecks').innerHTML = ''; $('#stVerdict').hidden = true; $('#stActs').innerHTML = ''; }
+function stageActs(btns) {
+  const box = $('#stActs'); box.innerHTML = '';
+  for (const b of btns) { const el = document.createElement('button'); el.textContent = b.t; el.className = b.cls || ''; el.onclick = b.f; box.appendChild(el); }
+}
+function stageVerdict(t) { const v = $('#stVerdict'); v.hidden = !t; v.textContent = t || ''; }
+function stageHead() {
   const g = G();
-  const st = $('#stage'); st.hidden = false;
   $('#stTitle').textContent = g.title;
-  $('#stPrize').textContent = result.d.prizeText ? 'Gewinnt: ' + result.d.prizeText : g.prize ? 'Preis: ' + g.prize : '';
+  const d = stage.d;
+  $('#stPrize').textContent = d?.prizeText ? 'Gewinnt: ' + d.prizeText : hasPrizes(g) && S.sel ? 'Verlost wird: ' + itemsText(g, S.sel.items) : g.prize ? 'Preis: ' + g.prize : '';
+}
+// Bühne ohne Ziehung: Wartebild mit Zählern (z.B. dauerhaft in OBS)
+function stageIdle() {
+  stage.d = null; stage.run++;
+  const st = $('#stage'); st.hidden = false; stageClear(); stageHead();
+  const ev = evaluated().filter((x) => x.ok);
+  const body = $('#stBody'); body.innerHTML = '';
+  const lbl = document.createElement('div'); lbl.className = 'lbl'; lbl.textContent = 'Gleich wird gezogen';
+  const cnt = document.createElement('div'); cnt.className = 'stcount'; cnt.id = 'stCount';
+  cnt.textContent = `${fmtNum(ev.length)} Teilnehmer · ${lose(ev.reduce((a, x) => a + x.tickets, 0))}`;
+  body.append(lbl, cnt);
+  const can = !$('#drawBtn').disabled;
+  stageActs(can ? [{ t: $('#drawBtn').textContent, cls: 'go', f: () => startDraw() }] : []);
+  if (!can) stageVerdict($('#drawNote').hidden ? '' : $('#drawNote').textContent);
+}
+function showStage(result) {
+  const run = ++stage.run;
+  stage.d = result.d;
+  $('#stage').hidden = false; stageClear(); stageHead();
   const body = $('#stBody');
-  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const names = [];
   for (let i = 0; i < 36; i++) names.push(result.names[randInt(result.names.length)]);
   names.push(result.d.n);
@@ -968,24 +1081,102 @@ function showStage(result) {
   const reel = $('#reel');
   for (const n of names) { const div = document.createElement('div'); div.textContent = n; reel.appendChild(div); }
   const finish = () => {
+    if (run !== stage.run) return;
     body.innerHTML = '';
-    const lbl = document.createElement('div'); lbl.className = 'lbl'; lbl.textContent = 'Gewinner';
+    const lbl = document.createElement('div'); lbl.className = 'lbl'; lbl.textContent = 'Gezogen';
     const win = document.createElement('div'); win.className = 'win'; win.textContent = '@' + result.d.n;
     const meta = document.createElement('div'); meta.className = 'meta';
     meta.textContent = `${PLATFORMS[result.d.p]?.label || ''} · Los ${fmtNum(result.d.roll)} von ${fmtNum(result.d.total)}`;
     body.append(lbl, win, meta);
-    if (!reduce) confetti();
+    runStageChecks(result.d, run);
   };
-  if (reduce) return finish();
+  if (reduceMotion()) return finish();
   const h = reel.firstElementChild.getBoundingClientRect().height;
   const target = (names.length - 1) * h, dur = 5200, t0 = performance.now();
   const ease = (t) => 1 - Math.pow(1 - t, 4);
   (function frame(now) {
+    if (run !== stage.run) return;
     const t = Math.min(1, (now - t0) / dur);
     reel.style.transform = `translateY(${-ease(t) * target}px)`;
     if (t < 1) requestAnimationFrame(frame); else setTimeout(finish, 350);
   })(t0);
 }
+
+// Prüfschritte für den Gewinner: automatisch (✓/✕), manuell (?) oder live abgefragt
+function condLabel(c) { return `${PLATFORMS[c.platform].label}: ${KINDS[c.kind].label}${c.target && !safeUrl(c.target) ? ' ' + c.target : ''}`; }
+function winnerChecks(d) {
+  const g = G(), entry = g.entries.find((e) => e.h === d.h && e.p === d.p);
+  const list = [];
+  if (entry?.p === 'youtube' && entry.ci && ytCfg().key) {
+    list.push({ cid: null, l: 'Kommentar steht noch', run: async () => {
+      const ok = await ytCommentExists(entry.ci);
+      return ok === null ? { s: 'manual', n: 'Konnte YouTube nicht fragen, bitte selbst ansehen' } : ok ? { s: 'ok', n: 'Live bei YouTube nachgesehen' } : { s: 'fail', n: 'Der Kommentar wurde gelöscht' };
+    } });
+  }
+  for (const c of g.conditions) {
+    const a = entry ? autoResult(c, entry) : null;
+    if (a) list.push({ cid: c.id, l: condLabel(c), s: a.ok ? 'ok' : 'fail', n: a.why });
+    else if (d.checks[c.id] === true) list.push({ cid: c.id, l: condLabel(c), s: 'ok', n: 'von dir bestätigt' });
+    else if (d.checks[c.id] === false) list.push({ cid: c.id, l: condLabel(c), s: 'fail', n: 'von dir als nicht erfüllt markiert' });
+    else {
+      const P = PLATFORMS[c.platform], hd = d.handles[c.platform] || d.h;
+      const url = c.platform === 'youtube' && entry?.yc ? 'https://www.youtube.com/channel/' + encodeURIComponent(entry.yc) : P.url ? P.url(hd) : null;
+      list.push({ cid: c.id, l: condLabel(c) + '?', s: 'manual', n: 'Profil im Stream zeigen und bestätigen', url });
+    }
+  }
+  if (!list.length) list.push({ cid: null, l: 'Teilnahme vorhanden', s: 'ok', n: entry?.s === 'comments' ? 'Kommentar eingelesen' : entry?.s === 'form' ? 'Über den Teilnahme-Link' : 'In der Teilnehmerliste' });
+  return list;
+}
+async function runStageChecks(d, run) {
+  const list = winnerChecks(d), shown = [];
+  const sym = { ok: '✓', fail: '✕', manual: '?', wait: '…' };
+  const paint = (items) => {
+    const ul = $('#stChecks'); ul.innerHTML = '';
+    for (const c of items) {
+      const li = document.createElement('li'); li.className = c.s;
+      const st = document.createElement('span'); st.className = 'st'; st.textContent = sym[c.s];
+      const tx = document.createElement('span'); tx.textContent = c.l;
+      const sm = document.createElement('small'); sm.textContent = c.n || ''; tx.appendChild(sm);
+      if (c.url && c.s === 'manual') { const a = document.createElement('a'); a.href = c.url; a.target = '_blank'; a.rel = 'noopener'; a.className = 'stlink'; a.textContent = 'Profil öffnen ↗'; tx.appendChild(a); }
+      li.append(st, tx); ul.appendChild(li);
+    }
+  };
+  for (const c of list) {
+    if (run !== stage.run) return;
+    paint([...shown, { s: 'wait', l: c.l, n: 'wird geprüft …' }]);
+    const res = c.run ? await c.run() : { s: c.s, n: c.n };
+    if (!reduceMotion()) await new Promise((r) => setTimeout(r, 700));
+    if (run !== stage.run) return;
+    shown.push({ ...c, ...res }); paint(shown);
+    if (res.s === 'fail') break;
+  }
+  if (run !== stage.run || d.status !== 'pending') return;
+  const g = G();
+  const fail = shown.find((c) => c.s === 'fail');
+  const next = () => stageActs([{ t: 'Nächste Ziehung', cls: 'solid', f: () => { stageIdle(); } }, { t: 'Schließen', f: closeStage }]);
+  const win = () => {
+    for (const c of shown) if (c.cid) d.checks[c.cid] = true;
+    d.status = 'won'; g.done = isDone(g); changed();
+    stageVerdict('Gewonnen: @' + d.n); if (!reduceMotion()) confetti(); next();
+  };
+  const lose = (reason) => {
+    d.status = 'out'; d.reason = reason; changed();
+    startDraw(d.items);
+  };
+  if (fail) {
+    if (fail.cid) d.checks[fail.cid] = false;
+    changed();
+    stageVerdict('Bedingung nicht erfüllt');
+    stageActs([{ t: 'Neu ziehen', cls: 'solid', f: () => lose(fail.l.replace(/\?$/, '') + ': ' + (fail.n || 'nicht erfüllt')) }]);
+  } else if (shown.some((c) => c.s === 'manual')) {
+    stageVerdict('Bitte im Stream bestätigen');
+    stageActs([
+      { t: 'Bestätigt', cls: 'solid', f: win },
+      { t: 'Nicht erfüllt', f: () => lose('beim Prüfen im Stream nicht erfüllt') },
+    ]);
+  } else win();
+}
+function closeStage() { stage.run++; stage.d = null; $('#stage').hidden = true; render(); }
 function confetti() {
   const cv = $('#fx'), cx = cv.getContext('2d');
   cv.width = innerWidth * devicePixelRatio; cv.height = innerHeight * devicePixelRatio;
@@ -1029,7 +1220,8 @@ function render() {
   }
   $('#rWinnersBox').hidden = hasPrizes(g);
 
-  renderRules(); renderPrizes(); renderLive(); renderPeople(ev); renderDraw(inn); renderHist();
+  renderRules(); renderPrizes(); renderLive(); renderPeople(ev); renderDraw(inn); renderHist(); renderFeed(ev);
+  if (!$('#stage').hidden && !stage.d) { const c = $('#stCount'); if (c) c.textContent = `${fmtNum(inn.length)} Teilnehmer · ${lose(inn.reduce((a, x) => a + x.tickets, 0))}`; stageHead(); }
 }
 
 function followerBox(c) {
@@ -1039,14 +1231,14 @@ function followerBox(c) {
   if (fl) {
     const ev = evaluated();
     const people = G().entries.filter((e) => e.p === c.platform || (G().rules.cross || 'once') !== 'separate');
-    const inList = new Set(people.filter((e) => fl.names.has(e.h)).map((e) => e.h)).size;
+    const inListN = new Set(people.filter((e) => inList(fl, e)).map((e) => e.h)).size;
     const total = new Set(people.map((e) => e.h)).size;
     const ok = document.createElement('span'); ok.className = 'how auto';
     ok.textContent = `Follower-Liste: ${fmtNum(fl.names.size)} Namen · Stand ${fmtDay(fl.date)}`;
     const info = document.createElement('span'); info.className = 'muted small';
-    info.textContent = total ? `${inList} von ${total} Teilnehmern folgen` : '';
+    info.textContent = total ? `${inListN} von ${total} Teilnehmern ${c.kind === 'sub' ? 'haben abonniert' : 'folgen'}` : '';
     const up = document.createElement('button'); up.className = 'sm'; up.textContent = 'Neue Liste';
-    up.onclick = () => pickFollowerFile(c);
+    up.onclick = () => (c.platform === 'youtube' ? ytLoadSubs(c) : pickFollowerFile(c));
     const rm = document.createElement('button'); rm.className = 'sm danger'; rm.textContent = 'Liste entfernen';
     rm.onclick = async () => { delete S.followers[fl.id]; render(); try { await store.deleteFollowers(fl.id); } catch (e) { console.warn(e); } };
     line.append(ok, info, up, rm);
@@ -1059,6 +1251,10 @@ function followerBox(c) {
     const up = document.createElement('button'); up.className = 'sm primary'; up.textContent = 'Follower-Liste hochladen';
     up.onclick = () => pickFollowerFile(c);
     const hint = document.createElement('span'); hint.className = 'muted small'; hint.textContent = 'dann prüft die App alle Teilnehmer automatisch';
+    if (c.platform === 'youtube') {
+      up.textContent = 'Abonnenten von YouTube laden'; up.onclick = () => ytLoadSubs(c);
+      hint.textContent = 'Anmeldung mit dem Google-Konto des Kanals';
+    }
     line.append(up, hint);
   }
   const det = document.createElement('details'); det.className = 'small';
@@ -1099,7 +1295,7 @@ function renderRules() {
     const del = document.createElement('button'); del.className = 'x'; del.textContent = '✕'; del.setAttribute('aria-label', 'Bedingung entfernen');
     del.onclick = () => { g.conditions = g.conditions.filter((x) => x !== c); changed(); };
     row.append(plat, t, del); box.appendChild(row);
-    if (c.kind === 'follow') row.appendChild(followerBox(c));
+    if (c.kind === 'follow' || c.kind === 'sub') row.appendChild(followerBox(c));
   }
   const setVal = (id, v) => { const el = $(id); if (document.activeElement !== el) el.value = v; };
   setVal('#rWinners', r.winners); setVal('#rMaxT', r.maxTickets); setVal('#rWord', r.word); setVal('#rTags', r.minTags);
@@ -1145,6 +1341,9 @@ function renderBonuses() {
 }
 
 function renderLive() {
+  const y = ytCfg();
+  for (const [id, v] of [['#ytKey', y.key], ['#ytClient', y.client], ['#ytVideo', y.video], ['#ytKw', y.kw]]) if (document.activeElement !== $(id) && !$(id).value) $(id).value = v || '';
+  renderForm();
   const c = ttCfg();
   for (const [id, v] of [['#ttUser', c.user ? '@' + c.user : ''], ['#ttKey', c.key], ['#ttApi', c.api]]) if (document.activeElement !== $(id) && !$(id).value) $(id).value = v || '';
   $('#ttOnlyFollow').checked = G().conditions.some((x) => x.kind === 'follow' && x.platform === 'tiktok');
@@ -1346,7 +1545,7 @@ function winnerCard(d) {
       if (flx && !flx.names.has(handle)) hint.textContent = `Nicht in deiner Follower-Liste vom ${fmtDay(flx.date)}. Vielleicht erst danach gefolgt: ` + hint.textContent;
       const links = document.createElement('div'); links.className = 'links';
       const P = PLATFORMS[c.platform];
-      if (P.url) { const a = document.createElement('a'); a.href = P.url(handle); a.target = '_blank'; a.rel = 'noopener'; a.textContent = `Profil @${handle} öffnen ↗`; links.appendChild(a); }
+      if (P.url) { const a = document.createElement('a'); a.href = c.platform === 'youtube' && entry?.yc && handle === d.h ? 'https://www.youtube.com/channel/' + encodeURIComponent(entry.yc) : P.url(handle); a.target = '_blank'; a.rel = 'noopener'; a.textContent = `Profil @${handle} öffnen ↗`; links.appendChild(a); }
       const tgt = safeUrl(c.target) || (P.url && c.target && /^@?[\w.-]+$/.test(c.target) ? P.url(norm(c.target)) : null);
       if (tgt) { const a = document.createElement('a'); a.href = tgt; a.target = '_blank'; a.rel = 'noopener'; a.textContent = (safeUrl(c.target) ? 'Beitrag öffnen' : `Konto ${c.target} öffnen`) + ' ↗'; links.appendChild(a); }
       box.append(hint, links);
@@ -1414,6 +1613,36 @@ function renderHist() {
   }
 }
 
+// ---------- Gemeinsame Live-Eingangsliste ----------
+S.feed = [];
+let feedTimer = null;
+function feedPush(item) {
+  S.feed.unshift({ ...item, at: Date.now() });
+  if (S.feed.length > 60) S.feed.length = 60;
+  if (!feedTimer) feedTimer = setTimeout(() => { feedTimer = null; renderFeed(); }, 300);
+}
+function renderFeed(ev = evaluated()) {
+  const map = new Map(ev.map((x) => [x.e.p + ':' + x.e.h, x]));
+  for (const panel of document.querySelectorAll('.feedpanel')) panel.hidden = !S.feed.length;
+  const joined = S.feed.filter((f) => f.joined).length;
+  for (const c of document.querySelectorAll('.feedcount')) c.textContent = `${fmtNum(S.feed.length)} zuletzt · ${fmtNum(joined)} mit Teilnahme`;
+  for (const box of document.querySelectorAll('.livefeed')) {
+    box.innerHTML = '';
+    for (const f of S.feed) {
+      const x = map.get(f.p + ':' + f.h);
+      const row = document.createElement('div'); row.className = 'feed';
+      const tag = document.createElement('span'); tag.className = 'ptag ' + f.p; tag.textContent = PLATFORMS[f.p]?.label || f.p;
+      const n = document.createElement('b'); n.textContent = '@' + f.name;
+      const c = document.createElement('span'); c.className = 'c'; c.textContent = f.text || '';
+      const st = document.createElement('span');
+      if (!f.joined) { st.className = 's in'; st.textContent = 'kein Stichwort'; }
+      else if (x?.ok) { st.className = 's ok'; st.textContent = `✓ zählt · ${x.tickets} Los${x.tickets > 1 ? 'e' : ''}`; }
+      else { st.className = 's no'; st.textContent = 'zählt nicht'; st.title = x?.reasons?.join(', ') || ''; }
+      row.append(tag, n, c, st); box.appendChild(row);
+    }
+  }
+}
+
 // ---------- TikTok LIVE (über Euler Stream, inoffiziell) ----------
 const TT_CLOSE = {
   4404: 'Der Streamer ist gerade nicht live.', 4005: 'Der Live-Stream ist beendet.', 4401: 'Der Euler-Stream-Schlüssel ist ungültig.',
@@ -1429,19 +1658,6 @@ function liveChanged() {
   if (!liveRenderTimer) liveRenderTimer = setTimeout(() => { liveRenderTimer = null; render(); }, 400);
 }
 function ttSetState(text, cls) { const b = $('#ttState'); b.textContent = text; b.className = 'badge ' + (cls || ''); }
-function ttFeedAdd(name, comment, status, joined) {
-  tt.feed.unshift({ name, comment, status, joined }); tt.feed.length = Math.min(tt.feed.length, 40);
-  const box = $('#ttFeed'); $('#ttFeedBox').hidden = false; box.innerHTML = '';
-  for (const f of tt.feed) {
-    const row = document.createElement('div'); row.className = 'feed';
-    const n = document.createElement('b'); n.textContent = '@' + f.name;
-    const c = document.createElement('span'); c.className = 'c'; c.textContent = f.comment;
-    const st = document.createElement('span'); st.className = 's ' + (f.joined ? (f.status ? 'ok' : 'no') : 'in');
-    const only = G().conditions.some((x) => x.kind === 'follow' && x.platform === 'tiktok');
-    st.textContent = f.joined ? (f.status ? '✓ dabei · Follower' : only ? 'kein Follower · zählt nicht' : 'dabei · kein Follower') : (f.status ? 'Follower' : '');
-    row.append(n, c, st); box.appendChild(row);
-  }
-}
 function ttHandle(msg) {
   const type = msg?.type || '', d = msg?.data || {};
   const u = d.user || {};
@@ -1463,7 +1679,7 @@ function ttHandle(msg) {
     }
     const e = g.entries.find((x) => x.p === 'tiktok' && x.h === h);
     if (e && follows !== undefined) e.lf = follows;
-    ttFeedAdd(name, comment, follows, joined || Boolean(ex));
+    feedPush({ p: 'tiktok', h, name, text: comment, joined: hit && NAME_RE.test(name) });
     if (joined || (e && follows !== undefined)) liveChanged();
     $('#ttInfo').textContent = `${fmtNum(tt.count)} Kommentare gelesen · ${fmtNum(tt.joined)} neu dabei`;
   } else if (/SocialMessage$/.test(type) && h) {
@@ -1573,18 +1789,7 @@ function igProcess(doc) {
   const e = G().entries.find((x) => x.p === 'instagram' && x.h === h);
   if (e && typeof d.follows === 'boolean') e.lf = d.follows;
   ig.count++; if (!existed) ig.joined++;
-  const only = G().conditions.some((x) => x.kind === 'follow' && x.platform === 'instagram');
-  ig.feed.unshift({ name: d.name || h, comment: (d.src === 'dm' ? 'DM: ' : 'Kommentar: ') + (d.text || ''), status: d.follows, only });
-  ig.feed.length = Math.min(ig.feed.length, 40);
-  const box = $('#igFeed'); $('#igFeedBox').hidden = false; box.innerHTML = '';
-  for (const f of ig.feed) {
-    const row = document.createElement('div'); row.className = 'feed';
-    const n = document.createElement('b'); n.textContent = '@' + f.name;
-    const c = document.createElement('span'); c.className = 'c'; c.textContent = f.comment;
-    const st = document.createElement('span'); st.className = 's ' + (f.status === true ? 'ok' : f.status === false ? 'no' : 'in');
-    st.textContent = f.status === true ? '✓ dabei · Follower' : f.status === false ? (f.only ? 'kein Follower · zählt nicht' : 'dabei · kein Follower') : 'dabei · Follow unbekannt';
-    row.append(n, c, st); box.appendChild(row);
-  }
+  feedPush({ p: 'instagram', h, name: d.name || h, text: (d.src === 'dm' ? 'DM: ' : 'Kommentar: ') + (d.text || ''), joined: true });
   $('#igInfo').textContent = `${fmtNum(ig.count)} Nachrichten empfangen · ${fmtNum(ig.joined)} neu dabei`;
   liveChanged();
   return true;
@@ -1615,6 +1820,253 @@ async function igCall(path, method = 'GET') {
   const d = await r.json().catch(() => null);
   if (!d) throw new Error(`Der Worker antwortet nicht richtig (HTTP ${r.status}). Ist die Adresse korrekt und der Code bereitgestellt?`);
   return d;
+}
+
+// ---------- Teilnahme-Link (öffentliches Formular) ----------
+const FORM_PLATS = ['snapchat', 'instagram', 'tiktok', 'youtube', 'twitch', 'facebook', 'x'];
+const fm = { unsub: null, pid: null, lastPub: '' };
+const cloudOn = () => store.mode === 'cloud' && store.provider === 'firebase';
+function fmUrl(pid) { return new URL('mitmachen.html?g=' + pid, location.href).href; }
+function fmPublicData(g) {
+  return {
+    owner: fb.user.uid, title: g.title || 'Gewinnspiel', prize: g.prize || '', open: g.pub.open !== false,
+    platforms: g.pub.platforms?.length ? g.pub.platforms : ['snapchat'],
+    rules: g.conditions.map((c) => condLabel(c)).slice(0, 20), word: g.rules.word || '',
+  };
+}
+let fmPubTimer = null;
+function fmPublishSoon() {
+  const g = G(); if (!g?.pub?.id || !cloudOn()) return;
+  clearTimeout(fmPubTimer);
+  fmPubTimer = setTimeout(async () => {
+    const data = fmPublicData(g), j = JSON.stringify(data);
+    if (j === fm.lastPub) return;
+    try { await fb.dbApi().doc('public/' + g.pub.id).set(data); fm.lastPub = j; } catch (e) { console.warn(e); $('#fmInfo').textContent = 'Link konnte nicht aktualisiert werden: ' + (e.code || e.message); }
+  }, 800);
+}
+function fmListen() {
+  const g = G();
+  const want = g?.pub && cloudOn() ? g.pub.id : null;
+  if (fm.pid === want) return;
+  if (fm.unsub) { try { fm.unsub(); } catch { /* egal */ } fm.unsub = null; }
+  fm.pid = want; fm.lastPub = '';
+  if (!want) return;
+  fm.unsub = fb.dbApi().collection('public/' + want + '/entries').onAdded(async (doc) => {
+    const d = doc.data || {}, gg = G();
+    if (!gg?.pub || gg.pub.id !== want) return;
+    // Einträge bleiben liegen (so sperren die Regeln doppelte Namen); übernommen wird jeder nur einmal
+    gg.pub.seen ||= [];
+    if (gg.pub.seen.includes(doc.id)) return;
+    gg.pub.seen.push(doc.id);
+    const h = String(d.h || '').toLowerCase();
+    if (FORM_PLATS.includes(d.platform) && NAME_RE.test(h)) {
+      if (!gg.entries.some((e) => e.p === d.platform && e.h === h)) importRows([{ h, name: d.name || h, text: String(d.text || '').slice(0, 300) }], d.platform, 'form');
+      feedPush({ p: d.platform, h, name: d.name || h, text: 'Teilnahme-Link' + (d.text ? ': ' + d.text : ''), joined: true });
+    }
+    liveChanged();
+  }, (err) => { $('#fmInfo').textContent = 'Empfang unterbrochen: ' + (err.code || err.message); });
+  fmPublishSoon();
+}
+function renderForm() {
+  const g = G(), cloud = cloudOn();
+  $('#fmNeedLogin').hidden = cloud;
+  const chosen = g.pub?.platforms || ['snapchat', 'instagram', 'tiktok', 'youtube'];
+  const box = $('#fmPlats'); box.innerHTML = '';
+  for (const k of FORM_PLATS) {
+    const b = document.createElement('button'); b.className = 'chip'; b.style.minHeight = '36px'; b.style.padding = '6px 12px';
+    b.textContent = PLATFORMS[k].label; b.setAttribute('aria-pressed', chosen.includes(k));
+    b.onclick = () => {
+      const now = new Set(G().pub?.platforms || chosen);
+      now.has(k) ? now.delete(k) : now.add(k);
+      if (!now.size) { toast('Mindestens eine Plattform auswählen'); return; }
+      G().pub = { ...(G().pub || { tmp: true }), platforms: FORM_PLATS.filter((x) => now.has(x)) };
+      changed();
+    };
+    box.appendChild(b);
+  }
+  const live = g.pub?.id;
+  $('#fmLinkRow').hidden = !live; $('#fmToggle').hidden = !live; $('#fmCreate').hidden = Boolean(live); $('#fmCreate').disabled = !cloud;
+  if (live) {
+    $('#fmLink').value = fmUrl(g.pub.id);
+    const open = g.pub.open !== false;
+    $('#fmToggle').textContent = open ? 'Teilnahme schließen' : 'Teilnahme wieder öffnen';
+    $('#fmState').textContent = open ? 'offen' : 'geschlossen'; $('#fmState').className = 'badge ' + (open ? 'live' : '');
+  } else { $('#fmState').textContent = 'kein Link'; $('#fmState').className = 'badge'; }
+  fmListen(); fmPublishSoon();
+}
+
+// ---------- YouTube (offiziell, Data API v3) ----------
+const yt = { timer: null, chatId: null, page: '', count: 0, joined: 0, seen: new Set() };
+const ytCfg = () => (S.settings.yt ||= { key: '', client: '', video: '', kw: '' });
+function ytSaveCfg() {
+  const c = ytCfg();
+  c.key = $('#ytKey').value.trim(); c.client = $('#ytClient').value.trim(); c.video = $('#ytVideo').value.trim(); c.kw = $('#ytKw').value.trim().slice(0, 30);
+  store.saveSettings();
+}
+function ytVideoId(v) {
+  v = String(v || '').trim();
+  const m = v.match(/(?:v=|youtu\.be\/|\/live\/|\/shorts\/|\/embed\/)([A-Za-z0-9_-]{11})/);
+  if (m) return m[1];
+  return /^[A-Za-z0-9_-]{11}$/.test(v) ? v : null;
+}
+const YT_ERR = {
+  quotaExceeded: 'Das Tageskontingent der YouTube-Schnittstelle ist aufgebraucht (setzt sich um 9 Uhr deutscher Zeit zurück).',
+  keyInvalid: 'Der API-Schlüssel ist ungültig.', API_KEY_INVALID: 'Der API-Schlüssel ist ungültig.',
+  liveChatEnded: 'Der Live-Stream ist beendet.', liveChatNotFound: 'Kein Live-Chat gefunden.', liveChatDisabled: 'Der Live-Chat ist abgeschaltet.',
+  commentsDisabled: 'Bei diesem Video sind Kommentare abgeschaltet.', videoNotFound: 'Video nicht gefunden.',
+  forbidden: 'Zugriff verweigert. Ist der Schlüssel für diese Webseite freigegeben?', API_KEY_HTTP_REFERRER_BLOCKED: 'Der Schlüssel ist für diese Webseite nicht freigegeben (Einschränkung „Websites“ prüfen).',
+  accessNotConfigured: 'Die „YouTube Data API v3“ ist im Google-Projekt nicht aktiviert.', SERVICE_DISABLED: 'Die „YouTube Data API v3“ ist im Google-Projekt nicht aktiviert.',
+};
+async function ytApi(path, params, token) {
+  const q = new URLSearchParams(params);
+  if (!token) q.set('key', ytCfg().key);
+  const r = await fetch(`https://www.googleapis.com/youtube/v3/${path}?${q}`, token ? { headers: { Authorization: 'Bearer ' + token } } : undefined);
+  const d = await r.json().catch(() => ({}));
+  if (!r.ok) {
+    const reason = d.error?.errors?.[0]?.reason || d.error?.details?.[0]?.reason || d.error?.status || '';
+    const err = new Error(YT_ERR[reason] || d.error?.message || 'YouTube-Fehler ' + r.status); err.reason = reason; throw err;
+  }
+  return d;
+}
+function ytAuthor(a) {
+  const dn = String(a.displayName || '').trim();
+  const handle = dn.startsWith('@') ? dn.slice(1).toLowerCase() : '';
+  const h = NAME_RE.test(handle) ? handle : 'yt_' + String(a.channelId || '').toLowerCase().slice(0, 27);
+  return { h, name: dn.replace(/^@/, '') || h, yc: a.channelId || '' };
+}
+function ytTakeEntry(a, text, src, extra = {}) {
+  const u = ytAuthor(a);
+  if (!NAME_RE.test(u.h)) return null;
+  const existed = G().entries.some((e) => e.p === 'youtube' && e.h === u.h);
+  importRows([{ h: u.h, name: u.name, text: String(text || '').slice(0, 300) }], 'youtube', src);
+  const e = G().entries.find((x) => x.p === 'youtube' && x.h === u.h);
+  if (e) { e.yc = u.yc; Object.assign(e, extra); }
+  return { ...u, existed };
+}
+function ytSetState(t, cls) { $('#ytState').textContent = t; $('#ytState').className = 'badge ' + (cls || ''); }
+async function ytLiveStart() {
+  ytSaveCfg();
+  const c = ytCfg(), vid = ytVideoId(c.video);
+  if (!c.key) { $('#ytInfo').textContent = 'Trage zuerst den API-Schlüssel ein.'; return; }
+  if (!vid) { $('#ytInfo').textContent = 'Den Link zum Live-Video eintragen (oder die 11-stellige Video-ID).'; return; }
+  ytLiveStop(true);
+  ytSetState('verbindet …');
+  try {
+    const v = await ytApi('videos', { part: 'liveStreamingDetails,snippet', id: vid });
+    const chatId = v.items?.[0]?.liveStreamingDetails?.activeLiveChatId;
+    if (!v.items?.length) throw new Error('Video nicht gefunden.');
+    if (!chatId) throw new Error('Das Video ist gerade nicht live (kein aktiver Live-Chat).');
+    Object.assign(yt, { chatId, page: '', count: 0, joined: 0, seen: new Set(), owner: v.items[0].snippet?.channelId });
+    ytSetState('live verbunden', 'live'); $('#ytLive').textContent = 'Trennen';
+    $('#ytInfo').textContent = 'Warte auf Nachrichten …';
+    ytPoll();
+  } catch (e) { ytSetState('aus'); $('#ytInfo').textContent = e.message; }
+}
+async function ytPoll() {
+  if (!yt.chatId) return;
+  const chatId = yt.chatId;
+  try {
+    const params = { liveChatId: chatId, part: 'snippet,authorDetails', maxResults: '2000' };
+    if (yt.page) params.pageToken = yt.page;
+    const d = await ytApi('liveChat/messages', params);
+    if (yt.chatId !== chatId) return;
+    yt.page = d.nextPageToken || yt.page;
+    const kw = (ytCfg().kw || '').toLowerCase();
+    let touched = false;
+    for (const it of d.items || []) {
+      if (yt.seen.has(it.id)) continue; yt.seen.add(it.id);
+      if (it.snippet?.type !== 'textMessageEvent') continue;
+      const a = it.authorDetails || {}, text = it.snippet.displayMessage || '';
+      if (a.isChatOwner || a.channelId === yt.owner) continue;
+      yt.count++;
+      const low = text.toLowerCase();
+      const hit = !kw || low.startsWith(kw) || low.split(/\s+/).includes(kw);
+      const u = hit ? ytTakeEntry(a, text, 'chat', { ym: Boolean(a.isChatSponsor) }) : ytAuthor(a);
+      if (hit && u && !u.existed) yt.joined++;
+      feedPush({ p: 'youtube', h: u?.h || '', name: u?.name || a.displayName || '', text, joined: Boolean(hit && u) });
+      if (hit) touched = true;
+    }
+    if (touched) liveChanged();
+    $('#ytInfo').textContent = `${fmtNum(yt.count)} Nachrichten gelesen · ${fmtNum(yt.joined)} neu dabei`;
+    yt.timer = setTimeout(ytPoll, Math.max(6000, Number(d.pollingIntervalMillis) || 6000));
+  } catch (e) {
+    if (yt.chatId !== chatId) return;
+    if (['liveChatEnded', 'quotaExceeded', 'liveChatNotFound', 'liveChatDisabled', 'forbidden', 'keyInvalid'].includes(e.reason)) {
+      ytLiveStop(true); $('#ytInfo').textContent = e.message + ` ${fmtNum(yt.joined)} Teilnehmer wurden aufgenommen.`;
+    } else { $('#ytInfo').textContent = 'Kurzer Fehler, versuche es weiter: ' + e.message; yt.timer = setTimeout(ytPoll, 10000); }
+  }
+}
+function ytLiveStop(silent) {
+  clearTimeout(yt.timer); yt.timer = null; yt.chatId = null;
+  ytSetState('aus'); $('#ytLive').textContent = 'Live-Chat verbinden';
+  if (!silent) $('#ytInfo').textContent = `Getrennt. ${fmtNum(yt.joined)} Teilnehmer wurden aufgenommen.`;
+}
+async function ytLoadComments() {
+  ytSaveCfg();
+  const c = ytCfg(), vid = ytVideoId(c.video);
+  if (!c.key) { $('#ytInfo').textContent = 'Trage zuerst den API-Schlüssel ein.'; return; }
+  if (!vid) { $('#ytInfo').textContent = 'Den Link zum Video eintragen.'; return; }
+  $('#ytComments').disabled = true; let page = '', n = 0, added = 0;
+  try {
+    for (let i = 0; i < 50; i++) {
+      const params = { part: 'snippet', videoId: vid, maxResults: '100', textFormat: 'plainText', order: 'time' };
+      if (page) params.pageToken = page;
+      const d = await ytApi('commentThreads', params);
+      for (const t of d.items || []) {
+        const top = t.snippet?.topLevelComment, sn = top?.snippet || {};
+        const a = { channelId: sn.authorChannelId?.value || '', displayName: sn.authorDisplayName || '' };
+        const before = G().entries.find((e) => e.p === 'youtube' && e.h === ytAuthor(a).h);
+        const u = ytTakeEntry(a, sn.textOriginal || sn.textDisplay || '', 'comments', before?.ci ? {} : { ci: top.id });
+        if (u) { n++; if (!u.existed) added++; }
+      }
+      $('#ytInfo').textContent = `${fmtNum(n)} Kommentare geladen …`;
+      page = d.nextPageToken; if (!page) break;
+    }
+    $('#ytInfo').textContent = `${fmtNum(n)} Kommentare geladen, ${fmtNum(added)} neue Teilnehmer.${page ? ' (Bei 5.000 Kommentaren abgebrochen.)' : ''}`;
+    changed();
+  } catch (e) { $('#ytInfo').textContent = e.message; }
+  $('#ytComments').disabled = false;
+}
+async function ytCommentExists(id) {
+  try { const d = await ytApi('comments', { part: 'id', id }); return (d.items || []).length > 0; }
+  catch (e) { console.warn(e); return null; }
+}
+let gisLoad = null;
+function loadGis() {
+  gisLoad ??= new Promise((res, rej) => { const sc = document.createElement('script'); sc.src = 'https://accounts.google.com/gsi/client'; sc.onload = res; sc.onerror = () => rej(new Error('Google-Anmeldung konnte nicht geladen werden')); document.head.appendChild(sc); });
+  return gisLoad;
+}
+async function ytLoadSubs(cond) {
+  ytSaveCfg();
+  const client = ytCfg().client;
+  if (!client) { toast('Trage im YouTube-Bereich (Einrichtung, Schritt 4) die OAuth-Client-ID ein'); setTab('people'); return; }
+  try {
+    await loadGis();
+    const token = await new Promise((res, rej) => {
+      const tc = google.accounts.oauth2.initTokenClient({
+        client_id: client, scope: 'https://www.googleapis.com/auth/youtube.readonly',
+        callback: (r) => (r.error ? rej(new Error('Google-Anmeldung: ' + r.error)) : res(r.access_token)),
+        error_callback: (e) => rej(new Error('Google-Anmeldung abgebrochen' + (e?.type ? ' (' + e.type + ')' : ''))),
+      });
+      tc.requestAccessToken();
+    });
+    toast('Abonnenten werden geladen …');
+    const names = new Set(); let page = '';
+    for (let i = 0; i < 400; i++) {
+      const params = { part: 'subscriberSnippet', mySubscribers: 'true', maxResults: '50' };
+      if (page) params.pageToken = page;
+      const d = await ytApi('subscriptions', params, token);
+      for (const it of d.items || []) { const id = it.subscriberSnippet?.channelId; if (id) names.add(id.toLowerCase()); }
+      page = d.nextPageToken; if (!page) break;
+    }
+    if (!names.size) { toast('YouTube hat keine Abonnenten geliefert (private Abos werden nicht angezeigt)'); return; }
+    const account = norm(cond.target);
+    const id = ('youtube_' + (account || 'kanal')).replace(/[^a-z0-9_]/gi, '_');
+    const fl = { id, platform: 'youtube', account, date: Date.now(), names, file: 'YouTube-Schnittstelle' };
+    S.followers[id] = fl; render(); setSave('pending');
+    await store.saveFollowers(fl); setSave('done');
+    toast(`${fmtNum(names.size)} Abonnenten geladen (YouTube zeigt nur öffentliche Abos)`);
+  } catch (e) { console.warn(e); toast(e.message); }
 }
 
 // ---------- Aktionen ----------
@@ -1713,6 +2165,27 @@ function bind() {
   for (const id of ['#igAcc', '#igKw', '#igWorker']) $(id).onchange = igSaveCfg;
   $('#igReply').onchange = igSaveCfg;
   $('#igListen').onclick = () => (ig.unsub ? igStop() : igStart());
+  for (const id of ['#ytKey', '#ytClient', '#ytVideo', '#ytKw']) $(id).onchange = ytSaveCfg;
+  $('#ytLive').onclick = () => (yt.chatId ? ytLiveStop() : ytLiveStart());
+  $('#ytComments').onclick = ytLoadComments;
+  $('#fmCreate').onclick = async () => {
+    if (!cloudOn()) return;
+    const g = G();
+    g.pub = { id: rnd(8), open: true, platforms: g.pub?.platforms || ['snapchat', 'instagram', 'tiktok', 'youtube'] };
+    try { await fb.dbApi().doc('public/' + g.pub.id).set(fmPublicData(g)); fm.lastPub = JSON.stringify(fmPublicData(g)); }
+    catch (e) { delete g.pub; toast('Link konnte nicht erstellt werden: ' + (e.code || e.message) + '. Sind die neuen Firebase-Regeln veröffentlicht?'); return; }
+    changed(); toast('Teilnahme-Link erstellt');
+  };
+  $('#fmToggle').onclick = () => { const g = G(); g.pub.open = g.pub.open === false; changed(); toast(g.pub.open ? 'Teilnahme geöffnet' : 'Teilnahme geschlossen'); };
+  $('#fmCopy').onclick = () => copyText($('#fmLink').value, 'Link kopiert');
+  $('#copyNotice').onclick = () => {
+    const g = G(), base = new URL('.', location.href).href;
+    const txt = `🎁 Gewinnspiel: ${g.title}${g.prize ? ' – zu gewinnen: ' + g.prize : ''}\n`
+      + (g.conditions.length ? 'So machst du mit: ' + g.conditions.map((c) => condLabel(c)).join(', ') + '.\n' : '')
+      + 'Teilnahme kostenlos. Der Gewinner wird live ausgelost. Teilnahmebedingungen & Datenschutz: ' + base + 'teilnahmebedingungen.html\n'
+      + 'Diese Aktion steht in keiner Verbindung zu Instagram, TikTok, Snapchat, YouTube oder anderen Plattformen und wird von ihnen weder gesponsert noch unterstützt.';
+    copyText(txt, 'Hinweistext kopiert');
+  };
   $('#igCopyCode').onclick = async () => {
     igSaveCfg();
     try {
@@ -1764,7 +2237,13 @@ function bind() {
     if (combos(G()).some((c) => JSON.stringify(Object.entries(c.items).sort()) === key)) { toast('Diese Kombi gibt es schon'); return; }
     combos(G()).push({ id: uid(), items }); S.combo = {}; changed(); toast('Kombi gespeichert');
   };
-  $('#stageClose').onclick = () => { $('#stage').hidden = true; render(); };
+  $('#stageClose').onclick = closeStage;
+  $('#stageOpen').onclick = stageIdle;
+  $('#stageGreen').onclick = () => {
+    const on = !$('#stage').classList.contains('green');
+    $('#stage').classList.toggle('green', on); $('#stageGreen').setAttribute('aria-pressed', on); lsSet('losfee.green', on);
+  };
+  if (lsGet('losfee.green')) { $('#stage').classList.add('green'); $('#stageGreen').setAttribute('aria-pressed', 'true'); }
 
   $('#delG').onclick = () => { $('#delAsk').hidden = false; };
   $('#delNo').onclick = () => { $('#delAsk').hidden = true; };

@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Impressum · Losfee</title>
+<style>
+  :root { --bg: #eef0f6; --fg: #141625; --muted: #5d6178; --card: #fff; --line: #d3d7e4; --warn: #fff2d6; --warn-fg: #7a4d00; }
+  @media (prefers-color-scheme: dark) { :root { --bg: #0f1120; --fg: #eef0fa; --muted: #9aa0bd; --card: #181b2e; --line: #2f3450; --warn: #3a2c10; --warn-fg: #ffc15a; color-scheme: dark; } }
+  body { margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.6 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  main { max-width: 720px; margin: 0 auto; padding: 24px max(16px, env(safe-area-inset-left, 0px)) 60px; }
+  section { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 16px 18px; margin-top: 14px; }
+  h1 { font-size: 26px; margin: 0 0 4px; } h2 { font-size: 18px; margin: 0 0 6px; }
+  p, li { color: var(--fg); } .muted { color: var(--muted); }
+  .todo { background: var(--warn); color: var(--warn-fg); padding: 2px 6px; border-radius: 6px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Impressum</h1>
+  <p class="muted"></p>
+  <section>
+    <h2>Angaben gemäß § 5 DDG</h2>
+    <p><span class="todo">[Vor- und Nachname]</span><br>
+       <span class="todo">[Straße und Hausnummer]</span><br>
+       <span class="todo">[PLZ und Ort]</span></p>
+  </section>
+  <section>
+    <h2>Kontakt</h2>
+    <p>E-Mail: <span class="todo">[Kontakt-E-Mail]</span><br>
+       Telefon: <span class="todo">[Telefonnummer, freiwillig]</span></p>
+  </section>
+  <section>
+    <h2>Verantwortlich für den Inhalt nach § 18 Abs. 2 MStV</h2>
+    <p><span class="todo">[Vor- und Nachname, Anschrift wie oben]</span></p>
+  </section>
+  <p class="muted" style="margin-top:18px"><a href="teilnahmebedingungen.html">Teilnahmebedingungen</a> · <a href="datenschutz.html">Datenschutz</a> · <a href="impressum.html">Impressum</a></p>
+</main>
+</body>
+</html>
