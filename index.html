@@ -183,6 +183,12 @@ details summary { cursor: pointer; font-weight: 600; }
 .step b { min-width: 30px; text-align: center; font-variant-numeric: tabular-nums; }
 .gift { padding: 10px 14px; border-bottom: 1px solid var(--line); font-weight: 600; background: var(--surface2); }
 .stock { font-size: 13px; color: var(--muted); }
+.feed { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 8px; align-items: center; padding: 7px 12px; border-top: 1px solid var(--line); font-size: 13px; }
+.feed:first-child { border-top: 0; }
+.feed .c { color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.feed .s { font-size: 11px; font-weight: 600; padding: 2px 6px; border-radius: 99px; white-space: nowrap; }
+.feed .s.ok { background: var(--ok-bg); color: var(--ok); } .feed .s.no { background: var(--bad-bg); color: var(--bad); } .feed .s.in { background: var(--warn-bg); color: var(--warn); }
+.badge.live { background: var(--ok-bg); color: var(--ok); }
 .bon { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
 .bon button { min-height: 30px; padding: 4px 9px; font-size: 12px; border-radius: 99px; }
 .bon button[aria-pressed=true] { background: var(--ticket); border-color: var(--ticket); color: var(--ticket-ink); }
@@ -325,6 +331,26 @@ details summary { cursor: pointer; font-weight: 600; }
 
   <!-- Teilnehmer -->
   <section role="tabpanel" id="p-people" aria-labelledby="t-people" hidden>
+    <div class="panel" id="livePanel">
+      <div class="row" style="justify-content:space-between"><h2>Live-Teilnahme: TikTok</h2><span class="badge" id="ttState">getrennt</span></div>
+      <p class="muted small">Während du auf TikTok live bist, liest die App den Chat mit. Wer das Stichwort schreibt, ist sofort dabei, und TikTok meldet bei jedem Kommentar, ob die Person dir folgt.</p>
+      <div class="note">Hinweis: Das läuft über den Dienst Euler Stream und ist <b>keine offizielle TikTok-Schnittstelle</b>. Es kann jederzeit ausfallen. Prüfe den Gewinner im Zweifel zusätzlich über den Profil-Link.</div>
+      <div class="grid2">
+        <label class="f">TikTok-Name des Streamers<input id="ttUser" placeholder="@streamername" autocomplete="off"></label>
+        <label class="f">Stichwort im Chat<input id="ttKey" placeholder="z.B. !los (leer = jeder Kommentar)" autocomplete="off"></label>
+      </div>
+      <label class="f">Euler-Stream-Schlüssel (API-Key)<input id="ttApi" type="password" placeholder="von eulerstream.com" autocomplete="off"></label>
+      <label class="c"><input type="checkbox" id="ttOnlyFollow"><span>Nur Follower zählen <span class="muted small">(legt die Regel „TikTok · folgt dem Konto“ an)</span></span></label>
+      <div class="row">
+        <button class="primary" id="ttConnect">Verbinden</button>
+        <span class="muted small" id="ttInfo"></span>
+      </div>
+      <div class="list" id="ttFeedBox" hidden><div class="scroll" id="ttFeed" style="max-height:220px"></div></div>
+      <details class="small"><summary>So bekommst du den Schlüssel</summary>
+        <p class="muted" style="margin-top:6px">Auf eulerstream.com ein kostenloses Konto anlegen und im Dashboard einen API-Key erstellen. Der Schlüssel wird nur in deinem Konto bei Losfee gespeichert. Gib ihn nicht weiter: Wer ihn hat, kann dein Euler-Kontingent nutzen.</p>
+      </details>
+    </div>
+
     <div class="panel">
       <h2>Teilnehmer einfügen</h2>
       <p class="muted small">Kopiere Kommentare oder Chat-Namen und füge sie hier ein. Eine Zeile pro Kommentar, der Name zuerst: <span class="mono">@lisa_m mega! @tom @anna</span>. Doppelte Namen werden zusammengefasst.</p>
@@ -719,7 +745,9 @@ function evaluate(e, ctx) {
     const tags = new Set(((e.t || '').match(/@[a-z0-9._-]{2,30}/gi) || []).map((x) => x.slice(1).toLowerCase()).filter((x) => x !== e.h));
     if (tags.size < r.minTags) reasons.push(`nur ${tags.size} von ${r.minTags} Markierungen`);
   }
-  if (followMode() === 'exclude') for (const c of G().conditions) {
+  if (followMode() === 'exclude' && e.p === 'tiktok' && e.lf === false && G().conditions.some((c) => c.kind === 'follow' && c.platform === 'tiktok')) {
+    reasons.push('folgt nicht auf TikTok (live gemeldet)');
+  } else if (followMode() === 'exclude') for (const c of G().conditions) {
     const fl = followersFor(c);
     if (fl && !fl.names.has(e.h)) reasons.push(`folgt nicht${c.target ? ' ' + c.target : ''} auf ${PLATFORMS[c.platform].label}`);
   }
@@ -841,6 +869,10 @@ const EXPORT_HELP = {
 
 // Automatisch erfüllte Bedingungen (aus den eingefügten Kommentaren oder der Follower-Liste)
 function autoResult(cond, entry) {
+  if (cond.kind === 'follow' && cond.platform === 'tiktok' && entry.p === 'tiktok' && typeof entry.lf === 'boolean') {
+    if (entry.lf) return { ok: true, why: 'folgt (live von TikTok gemeldet)' };
+    if (followMode() !== 'winner') return { ok: false, why: 'folgt nicht (live von TikTok gemeldet)' };
+  }
   if (cond.kind === 'follow') {
     const fl = followersFor(cond);
     if (!fl) return null;
@@ -856,7 +888,7 @@ function autoResult(cond, entry) {
   }
   return null;
 }
-const isAuto = (c) => c.kind === 'comment' || c.kind === 'tag' || Boolean(followersFor(c));
+const isAuto = (c) => c.kind === 'comment' || c.kind === 'tag' || Boolean(followersFor(c)) || (c.kind === 'follow' && c.platform === 'tiktok' && G().entries.some((e) => typeof e.lf === 'boolean'));
 
 // ---------- Ziehung ----------
 function drawOne(items) {
@@ -956,7 +988,7 @@ function render() {
   }
   $('#rWinnersBox').hidden = hasPrizes(g);
 
-  renderRules(); renderPrizes(); renderPeople(ev); renderDraw(inn); renderHist();
+  renderRules(); renderPrizes(); renderLive(); renderPeople(ev); renderDraw(inn); renderHist();
 }
 
 function followerBox(c) {
@@ -1071,6 +1103,12 @@ function renderBonuses() {
   $('#iPlat').closest('label').hidden = im.value !== 'add';
 }
 
+function renderLive() {
+  const c = ttCfg();
+  for (const [id, v] of [['#ttUser', c.user ? '@' + c.user : ''], ['#ttKey', c.key], ['#ttApi', c.api]]) if (document.activeElement !== $(id) && !$(id).value) $(id).value = v || '';
+  $('#ttOnlyFollow').checked = G().conditions.some((x) => x.kind === 'follow' && x.platform === 'tiktok');
+}
+
 function renderPeople(ev) {
   const q = norm($('#pSearch').value);
   const list = ev.filter((x) => (S.filter === 'all' || (S.filter === 'in' ? x.ok : !x.ok)) && (!q || x.e.h.includes(q)));
@@ -1085,6 +1123,7 @@ function renderPeople(ev) {
     const sub = document.createElement('div'); sub.className = 'txt';
     sub.textContent = `${PLATFORMS[x.e.p]?.label || ''} · ${x.e.c} Kommentar${x.e.c > 1 ? 'e' : ''}${x.e.t ? ' · ' + x.e.t : ''}`;
     info.append(n, sub);
+    if (typeof x.e.lf === 'boolean') { const w = document.createElement('div'); w.className = 'txt'; w.textContent = x.e.lf ? 'TikTok LIVE: folgt ✓' : 'TikTok LIVE: folgt nicht'; info.appendChild(w); }
     if (x.ok && x.also?.length) { const w = document.createElement('div'); w.className = 'txt'; w.textContent = 'auch dabei auf ' + x.also.join(', '); info.appendChild(w); }
     if (!x.ok) { const w = document.createElement('div'); w.className = 'why'; w.textContent = x.reasons.join(' · '); info.appendChild(w); }
     if (bonuses(G()).length && !x.dup) {
@@ -1326,6 +1365,115 @@ function renderHist() {
   }
 }
 
+// ---------- TikTok LIVE (über Euler Stream, inoffiziell) ----------
+const TT_CLOSE = {
+  4404: 'Der Streamer ist gerade nicht live.', 4005: 'Der Live-Stream ist beendet.', 4401: 'Der Euler-Stream-Schlüssel ist ungültig.',
+  4400: 'TikTok-Name oder Schlüssel ungültig.', 4429: 'Zu viele Verbindungen. Warte kurz und versuche es erneut.', 4403: 'Der Schlüssel hat keinen Zugriff auf diesen Kanal.',
+  4500: 'TikTok hat die Verbindung getrennt.', 4006: 'Eine Minute lang kamen keine Nachrichten, Verbindung beendet.', 4555: 'Maximale Laufzeit (8 Stunden) erreicht.',
+  1011: 'Fehler beim Dienst Euler Stream.', 4556: 'TikTok hat nicht geantwortet.', 4557: 'TikTok hat nicht geantwortet.',
+};
+const tt = { ws: null, count: 0, joined: 0, feed: [], want: false };
+const ttCfg = () => (S.settings.tt ||= { user: '', key: '', api: '' });
+let liveRenderTimer = null;
+function liveChanged() {
+  if (G()) store.saveGiveaway(G());
+  if (!liveRenderTimer) liveRenderTimer = setTimeout(() => { liveRenderTimer = null; render(); }, 400);
+}
+function ttSetState(text, cls) { const b = $('#ttState'); b.textContent = text; b.className = 'badge ' + (cls || ''); }
+function ttFeedAdd(name, comment, status, joined) {
+  tt.feed.unshift({ name, comment, status, joined }); tt.feed.length = Math.min(tt.feed.length, 40);
+  const box = $('#ttFeed'); $('#ttFeedBox').hidden = false; box.innerHTML = '';
+  for (const f of tt.feed) {
+    const row = document.createElement('div'); row.className = 'feed';
+    const n = document.createElement('b'); n.textContent = '@' + f.name;
+    const c = document.createElement('span'); c.className = 'c'; c.textContent = f.comment;
+    const st = document.createElement('span'); st.className = 's ' + (f.joined ? (f.status ? 'ok' : 'no') : 'in');
+    const only = G().conditions.some((x) => x.kind === 'follow' && x.platform === 'tiktok');
+    st.textContent = f.joined ? (f.status ? '✓ dabei · Follower' : only ? 'kein Follower · zählt nicht' : 'dabei · kein Follower') : (f.status ? 'Follower' : '');
+    row.append(n, c, st); box.appendChild(row);
+  }
+}
+function ttHandle(msg) {
+  const type = msg?.type || '', d = msg?.data || {};
+  const u = d.user || {};
+  const h = String(u.displayId || u.uniqueId || '').toLowerCase();
+  const name = u.displayId || u.uniqueId || '';
+  const fs = u.followInfo?.followStatus;
+  const follows = typeof fs === 'number' ? fs >= 1 : undefined;
+  if (/ChatMessage$/.test(type) && h) {
+    tt.count++;
+    const comment = String(d.comment || '');
+    const kw = (ttCfg().key || '').trim().toLowerCase();
+    const hit = !kw || comment.toLowerCase().split(/\s+/).includes(kw) || comment.toLowerCase().startsWith(kw);
+    const g = G(); let joined = false;
+    const ex = g.entries.find((e) => e.p === 'tiktok' && e.h === h);
+    if (hit && !NAME_RE.test(name)) { /* ungewöhnlicher Name: ignorieren */ }
+    else if (hit) {
+      importRows([{ h, name, text: comment.slice(0, 300) }], 'tiktok', 'comments');
+      joined = true; if (!ex) tt.joined++;
+    }
+    const e = g.entries.find((x) => x.p === 'tiktok' && x.h === h);
+    if (e && follows !== undefined) e.lf = follows;
+    ttFeedAdd(name, comment, follows, joined || Boolean(ex));
+    if (joined || (e && follows !== undefined)) liveChanged();
+    $('#ttInfo').textContent = `${fmtNum(tt.count)} Kommentare gelesen · ${fmtNum(tt.joined)} neu dabei`;
+  } else if (/SocialMessage$/.test(type) && h) {
+    // Jemand folgt während des Streams: Status aktualisieren
+    const label = JSON.stringify(d.common?.displayText || d.displayText || '').toLowerCase();
+    if (/follow/.test(label) || d.action === 1) {
+      const e = G().entries.find((x) => x.p === 'tiktok' && x.h === h);
+      if (e) { e.lf = true; liveChanged(); }
+    }
+  }
+}
+async function ttParse(data) {
+  let text = data;
+  if (data instanceof Blob) text = await data.text();
+  else if (data instanceof ArrayBuffer) text = new TextDecoder().decode(data);
+  try { return JSON.parse(text); } catch { return null; }
+}
+function ttConnect() {
+  const c = ttCfg();
+  c.user = norm($('#ttUser').value); c.key = $('#ttKey').value.trim().slice(0, 30); c.api = $('#ttApi').value.trim();
+  store.saveSettings();
+  if (!c.user) { $('#ttInfo').textContent = 'Gib den TikTok-Namen des Streamers ein.'; return; }
+  if (!c.api) { $('#ttInfo').textContent = 'Gib den Euler-Stream-Schlüssel ein.'; return; }
+  ttDisconnect(true);
+  tt.want = true; tt.count = 0; tt.joined = 0;
+  const url = 'wss://ws.eulerstream.com?' + new URLSearchParams({ uniqueId: c.user, apiKey: c.api });
+  ttSetState('verbindet …');
+  let ws;
+  try { ws = new WebSocket(url); } catch (e) { ttSetState('Fehler'); $('#ttInfo').textContent = 'Verbindung nicht möglich: ' + e.message; return; }
+  tt.ws = ws;
+  ws.onopen = () => { ttSetState('live verbunden', 'live'); $('#ttConnect').textContent = 'Trennen'; $('#ttInfo').textContent = 'Warte auf Kommentare …'; };
+  ws.onmessage = async (ev) => {
+    const m = await ttParse(ev.data); if (!m) return;
+    const list = Array.isArray(m.messages) ? m.messages : [m];
+    for (const x of list) { try { ttHandle(x); } catch (err) { console.warn(err); } }
+  };
+  ws.onclose = (ev) => {
+    if (tt.ws !== ws) return;
+    tt.ws = null; $('#ttConnect').textContent = 'Verbinden';
+    ttSetState('getrennt');
+    if (tt.want && ev.code !== 1000) $('#ttInfo').textContent = (TT_CLOSE[ev.code] || `Verbindung beendet (Code ${ev.code}).`) + ` ${fmtNum(tt.joined)} Teilnehmer wurden aufgenommen.`;
+    tt.want = false;
+  };
+  ws.onerror = () => { /* onclose folgt mit Code */ };
+}
+function ttDisconnect(silent) {
+  tt.want = false;
+  if (tt.ws) { const w = tt.ws; tt.ws = null; try { w.close(1000); } catch { /* egal */ } }
+  $('#ttConnect').textContent = 'Verbinden'; ttSetState('getrennt');
+  if (!silent) $('#ttInfo').textContent = `Getrennt. ${fmtNum(tt.joined)} Teilnehmer wurden aufgenommen.`;
+}
+function syncOnlyFollow(on) {
+  const g = G(), user = norm($('#ttUser').value) || ttCfg().user;
+  const ex = g.conditions.find((c) => c.kind === 'follow' && c.platform === 'tiktok');
+  if (on && !ex) g.conditions.push({ id: uid(), platform: 'tiktok', kind: 'follow', target: user ? '@' + user : '' });
+  if (!on && ex) g.conditions = g.conditions.filter((c) => c !== ex);
+  changed();
+}
+
 // ---------- Aktionen ----------
 function select(id) { S.cur = S.list.find((g) => g.id === id) || S.list[0]; S.sel = null; S.combo = {}; lsSet('losfee.cur', S.cur.id); render(); }
 function setTab(t) {
@@ -1416,6 +1564,9 @@ function bind() {
     S.filter = b.dataset.f; for (const x of document.querySelectorAll('.filterbar [data-f]')) x.setAttribute('aria-pressed', x === b); render();
   };
   $('#pSearch').oninput = () => render();
+  $('#ttConnect').onclick = () => (tt.ws ? ttDisconnect() : ttConnect());
+  $('#ttOnlyFollow').onchange = (e) => syncOnlyFollow(e.target.checked);
+  for (const id of ['#ttUser', '#ttKey', '#ttApi']) $(id).onchange = () => { const c = ttCfg(); c.user = norm($('#ttUser').value); c.key = $('#ttKey').value.trim().slice(0, 30); c.api = $('#ttApi').value.trim(); store.saveSettings(); };
   $('#iMode').onchange = () => render();
 
   $('#drawBtn').onclick = () => startDraw();
