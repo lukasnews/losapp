@@ -93,10 +93,14 @@ public/             Login, Dashboard, Overlay
 test/               Tests der Verlosungslogik
 ```
 
-## Losfee (ohne Server, ohne Twitch)
+## Losfee (Gewinnspiel-Seite für alle Plattformen)
 
-`artifact/losfee.html` ist eine eigenständige Version für Gewinnspiele auf Instagram, TikTok, YouTube, Snapchat & Co. Sie ist als Seite auf claude.ai veröffentlicht und braucht keinen Server:
+Läuft auf GitHub Pages: **https://lukasnews.github.io/losapp/** (Quelle: `index.html` im Branch `main`).
+
+- Login mit E-Mail/Passwort und Sync zwischen Geräten über Firebase (Projekt `losfee-fd3ce`, Regeln in `firestore.rules`); ohne Login wird nur im Browser gespeichert
 - Teilnehmer per Kopieren & Einfügen aus Kommentaren oder Chat, doppelte Namen werden zusammengefasst
-- Automatische Prüfung: Pflichtwort, Mindestzahl markierter Freunde, Sperrliste, frühere Gewinner, „hat kommentiert“
-- Faire, gewichtete Ziehung (Web Crypto) im Vollbild mit Animation, mit Protokoll (Los X von Y)
-- Bedingungen, die keine Plattform per Schnittstelle herausgibt (Follows auf Instagram/TikTok/Snapchat, Likes, Stories), werden beim Gewinner mit Direktlinks abgehakt
+- Automatische Prüfung: Pflichtwort, markierte Freunde, Sperrliste, frühere Gewinner, „hat kommentiert“
+- Follower-Abgleich über den offiziellen Daten-Export von Instagram/TikTok (ZIP, JSON, HTML oder Textliste)
+- Mehrfach-Teilnahme einstellbar, Bonus-Lose (+X / ×X), Preise mit Bestand und Kombis
+- Faire, gewichtete Ziehung (Web Crypto) im Vollbild mit Protokoll (Los X von Y)
+- Was keine Plattform herausgibt (Likes, Stories, Follows bei Snapchat/YouTube), wird beim Gewinner mit Direktlinks abgehakt

@@ -3,11 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Losfee</title>
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}</style>
 </head>
 <body>
-<title>Losfee</title>
-<meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap">
 <style>
@@ -492,7 +491,7 @@ const fb = {
     })();
     try { return await this.ready; } catch (e) { console.warn('Firebase nicht ladbar', e); return false; }
   },
-  // gleiche Form wie claude.use('db'): doc(path).get/set/delete, collection(path).get
+  // kleine Hülle: doc(path).get/set/delete, collection(path).get
   dbApi() {
     const { doc, getDoc, setDoc, deleteDoc, collection, getDocs } = this.m, fs = this.fs;
     return {
@@ -523,21 +522,10 @@ const AUTH_ERR = {
 const authMsg = (e) => AUTH_ERR[e?.code] ||
   (String(e?.code).startsWith('auth/api-key-not-valid') ? 'Die Firebase-Konfiguration stimmt nicht (apiKey).' : 'Fehler: ' + (e?.code || e?.message || e));
 
-// ---------- Speicher: claude.ai-Datenbank oder Firebase (privat), sonst dieses Gerät ----------
+// ---------- Speicher: Firebase (privat, mit Login), sonst dieses Gerät ----------
 const store = {
   db: null, base: null, mode: 'local', lastJson: {}, timers: {},
   async init() {
-    let db = null, user = null;
-    try {
-      const timeout = new Promise((r) => setTimeout(() => r(null), 10000));
-      [db, user] = await Promise.race([Promise.all([window.claude?.use?.('db'), window.claude?.use?.('user')]), timeout.then(() => [null, null])]);
-    } catch { db = null; }
-    if (db && user) {
-      try {
-        const id = await user.id();
-        if (id) { this.db = db; this.base = `data/users/${id}/app`; this.mode = 'cloud'; return; }
-      } catch { /* weiter */ }
-    }
     if (await fb.load()) {
       this.provider = 'firebase';
       if (fb.user) { this.db = fb.dbApi(); this.base = `users/${fb.user.uid}`; this.mode = 'cloud'; }
