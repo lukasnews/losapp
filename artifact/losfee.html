@@ -176,6 +176,12 @@ details summary { cursor: pointer; font-weight: 600; }
 .step b { min-width: 30px; text-align: center; font-variant-numeric: tabular-nums; }
 .gift { padding: 10px 14px; border-bottom: 1px solid var(--line); font-weight: 600; background: var(--surface2); }
 .stock { font-size: 13px; color: var(--muted); }
+.bon { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+.bon button { min-height: 30px; padding: 4px 9px; font-size: 12px; border-radius: 99px; }
+.bon button[aria-pressed=true] { background: var(--ticket); border-color: var(--ticket); color: var(--ticket-ink); }
+.bonus { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 8px; align-items: center; padding: 10px 12px; border: 1px solid var(--line); border-radius: 12px; }
+.bonus .cnt { font-size: 12px; color: var(--muted); grid-column: 1 / -1; margin-top: -4px; }
+.bonus select { width: auto; padding: 7px 9px; }
 </style>
 
 <div class="wrap">
@@ -250,13 +256,38 @@ details summary { cursor: pointer; font-weight: 600; }
       <h2>Regeln für die Lose</h2>
       <div class="grid2">
         <label class="f" id="rWinnersBox">Anzahl Gewinner<input id="rWinners" type="number" min="1" max="100" inputmode="numeric"></label>
-        <label class="f">Max. Lose pro Person<input id="rMaxT" type="number" min="1" max="100" inputmode="numeric"></label>
         <label class="f">Pflichtwort im Kommentar<input id="rWord" placeholder="z.B. #gewinnspiel (leer = egal)"></label>
         <label class="f">Mind. markierte Freunde (@)<input id="rTags" type="number" min="0" max="20" inputmode="numeric"></label>
       </div>
-      <label class="c"><input type="checkbox" id="rPerComment"><span>Jeder Kommentar ist ein Los <span class="muted small">(sonst 1 Los pro Person)</span></span></label>
+      <div class="grid2">
+        <label class="f">Mehrfach kommentiert<select id="rMulti">
+          <option value="once">zählt nur einmal (1 Los)</option>
+          <option value="each">jeder Kommentar = 1 Los</option>
+        </select></label>
+        <label class="f" id="rMaxTBox">Höchstens so viele Kommentar-Lose<input id="rMaxT" type="number" min="1" max="100" inputmode="numeric"></label>
+        <label class="f">Auf mehreren Plattformen dabei<select id="rCross">
+          <option value="once">eine Person, zählt einmal</option>
+          <option value="sum">eine Person, Lose werden addiert</option>
+          <option value="separate">wie verschiedene Personen</option>
+        </select></label>
+      </div>
+      <p class="muted small" id="rCrossHint">Gleicher Name auf Instagram und TikTok gilt als dieselbe Person.</p>
       <label class="c"><input type="checkbox" id="rPrev"><span>Gewinner früherer Gewinnspiele ausschließen</span></label>
       <label class="f">Sperrliste (gilt für alle Gewinnspiele)<textarea id="rBlock" style="min-height:70px" placeholder="ein Name pro Zeile, z.B. Fake-Konten"></textarea></label>
+    </div>
+    <div class="panel">
+      <h2>Bonus-Lose</h2>
+      <p class="muted small">Für Extra-Aktionen gibt es mehr Lose, z.B. „In Story geteilt: 2× Lose“. Wer den Bonus bekommt, legst du im Reiter Teilnehmer fest: Liste einfügen oder Teilnehmer antippen.</p>
+      <div id="bonusList" style="display:flex;flex-direction:column;gap:8px"></div>
+      <div class="chips" id="bonusPresets"></div>
+      <div class="row">
+        <input id="nBonus" placeholder="z.B. In Story geteilt" style="flex:1 1 160px;width:auto" aria-label="Name des Bonus">
+        <select id="nBonusMode" style="width:auto" aria-label="Art des Bonus">
+          <option value="add:1">+1 Los</option><option value="add:2">+2 Lose</option><option value="add:3">+3 Lose</option>
+          <option value="mul:2">2× Lose</option><option value="mul:3">3× Lose</option><option value="mul:4">4× Lose</option>
+        </select>
+        <button class="primary" id="addBonus">Hinzufügen</button>
+      </div>
     </div>
   </section>
 
@@ -291,6 +322,7 @@ details summary { cursor: pointer; font-weight: 600; }
         <label class="f">Woher?<select id="iSrc"><option value="comments">Kommentare unter dem Beitrag</option><option value="list">Liste / Chat / sonstiges</option></select></label>
       </div>
       <textarea id="iText" aria-label="Kommentare einfügen" placeholder="@lisa_m Ich will gewinnen! @tom @anna&#10;max.power #gewinnspiel @kim&#10;@jule"></textarea>
+      <label class="f" id="iModeBox" hidden>Was passiert mit den Namen?<select id="iMode"></select></label>
       <div class="row"><button class="primary" id="iGo">Übernehmen</button><span class="muted small" id="iInfo"></span></div>
     </div>
 
@@ -423,7 +455,8 @@ const S = { list: [], cur: null, settings: { blacklist: [] }, filter: 'all', tab
 function blankGiveaway() {
   return {
     id: uid(), title: 'Neues Gewinnspiel', prize: '', createdAt: Date.now(), done: false,
-    rules: { winners: 1, maxTickets: 1, word: '', minTags: 0, perComment: false, excludePrev: true },
+    rules: { winners: 1, maxTickets: 5, word: '', minTags: 0, perComment: false, excludePrev: true, cross: 'once' },
+    bonuses: [],
     conditions: [], entries: [], draws: [], prizes: [], combos: [],
   };
 }
@@ -582,6 +615,8 @@ const G = () => S.cur;
 const prizes = (g) => g.prizes || (g.prizes = []);
 const combos = (g) => g.combos || (g.combos = []);
 const hasPrizes = (g) => prizes(g).length > 0;
+const bonuses = (g) => g.bonuses || (g.bonuses = []);
+const bonusLabel = (b) => (b.mode === 'mul' ? `${b.value}× Lose` : `+${b.value} Los${b.value > 1 ? 'e' : ''}`);
 function stockLeft(g) {
   const used = {};
   for (const d of g.draws) if (d.status !== 'out' && d.items) for (const [k, n] of Object.entries(d.items)) used[k] = (used[k] || 0) + n;
@@ -663,11 +698,43 @@ function evaluate(e, ctx) {
   }
   const drawn = G().draws.find((d) => d.h === e.h && d.p === e.p);
   if (drawn && drawn.status === 'out') reasons.push('disqualifiziert: ' + (drawn.reason || 'Bedingung nicht erfüllt'));
-  const tickets = Math.min(r.maxTickets || 1, r.perComment ? e.c : 1);
-  return { ok: reasons.length === 0, reasons, tickets };
+  return { ok: reasons.length === 0, reasons, tickets: baseTickets(e) };
+}
+// Kommentar-Lose einer Person (ohne Bonus)
+function baseTickets(e) {
+  const r = G().rules;
+  return r.perComment ? Math.max(1, Math.min(r.maxTickets || 1, e.c)) : 1;
+}
+// Bonus anwenden: erst alle „+X“, dann alle „×X“
+function withBonus(base, bset) {
+  let add = 0, mul = 1; const got = [];
+  for (const b of bonuses(G())) if (bset.has(b.id)) { got.push(b); if (b.mode === 'mul') mul *= b.value; else add += b.value; }
+  return { tickets: (base + add) * mul, got };
 }
 function ctx() { return { block: new Set(S.settings.blacklist || []), prev: prevWinners() }; }
-function evaluated() { const c = ctx(); return G().entries.map((e) => ({ e, ...evaluate(e, c) })); }
+function evaluated() {
+  const c = ctx(), g = G(), cross = g.rules.cross || 'once';
+  const list = g.entries.map((e) => ({ e, ...evaluate(e, c) }));
+  // Gleiche Person auf mehreren Plattformen zusammenfassen
+  const groups = new Map();
+  for (const x of list) {
+    const key = cross === 'separate' ? x.e.p + ':' + x.e.h : x.e.h;
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(x);
+  }
+  for (const grp of groups.values()) {
+    const ok = grp.filter((x) => x.ok);
+    const bset = new Set(grp.flatMap((x) => Object.keys(x.e.b || {}).filter((k) => x.e.b[k])));
+    if (!ok.length) { for (const x of grp) { x.bonus = []; } continue; }
+    const main = ok[0];
+    const base = cross === 'sum' ? ok.reduce((a, x) => a + x.tickets, 0) : Math.max(...ok.map((x) => x.tickets));
+    const { tickets, got } = withBonus(base, bset);
+    main.tickets = tickets; main.bonus = got;
+    main.also = ok.slice(1).map((x) => PLATFORMS[x.e.p]?.label);
+    for (const x of ok.slice(1)) { x.ok = false; x.dup = true; x.tickets = 0; x.reasons = [`zählt schon über ${PLATFORMS[main.e.p]?.label}`]; x.bonus = []; }
+  }
+  return list;
+}
 
 // Automatisch erfüllte Bedingungen (aus den eingefügten Kommentaren)
 function autoResult(cond, entry) {
@@ -695,6 +762,7 @@ function drawOne(items) {
     id: uid(), h: pick.e.h, n: pick.e.n, p: pick.e.p, at: Date.now(), roll: roll + 1, total, pool: pool.length,
     tickets: pick.tickets, status: 'pending', checks: {}, handles: {}, reason: '',
     items: items || null, prizeText: items ? itemsText(g, items) : '',
+    bonus: (pick.bonus || []).map((b) => `${b.name} (${bonusLabel(b)})`),
   };
   for (const c of g.conditions) { const a = autoResult(c, pick.e); if (a) d.checks[c.id] = a.ok; }
   g.draws.push(d);
@@ -798,9 +866,44 @@ function renderRules() {
   }
   const setVal = (id, v) => { const el = $(id); if (document.activeElement !== el) el.value = v; };
   setVal('#rWinners', r.winners); setVal('#rMaxT', r.maxTickets); setVal('#rWord', r.word); setVal('#rTags', r.minTags);
-  $('#rPerComment').checked = r.perComment; $('#rPrev').checked = r.excludePrev;
-  $('#rMaxT').disabled = !r.perComment;
+  $('#rMulti').value = r.perComment ? 'each' : 'once'; $('#rPrev').checked = r.excludePrev;
+  $('#rMaxTBox').hidden = !r.perComment;
+  $('#rCross').value = r.cross || 'once';
+  $('#rCrossHint').textContent = { once: 'Gleicher Name auf Instagram und TikTok ist dieselbe Person und hat nur einmal Lose.', sum: 'Gleicher Name auf mehreren Plattformen ist dieselbe Person, die Lose werden zusammengezählt (Bonus für mehr Plattformen).', separate: 'Gleicher Name auf zwei Plattformen zählt wie zwei Personen und kann zweimal gewinnen.' }[r.cross || 'once'];
+  renderBonuses();
   if (document.activeElement !== $('#rBlock')) $('#rBlock').value = (S.settings.blacklist || []).join('\n');
+}
+
+function renderBonuses() {
+  const g = G(); const ev = evaluated();
+  const box = $('#bonusList'); box.innerHTML = '';
+  for (const b of bonuses(g)) {
+    const row = document.createElement('div'); row.className = 'bonus';
+    const name = document.createElement('input'); name.value = b.name; name.setAttribute('aria-label', 'Name des Bonus');
+    name.onchange = () => { b.name = name.value.trim().slice(0, 40) || b.name; changed(); };
+    const sel = document.createElement('select'); sel.setAttribute('aria-label', 'Wert des Bonus');
+    for (const [v, l] of [['add:1', '+1 Los'], ['add:2', '+2 Lose'], ['add:3', '+3 Lose'], ['add:5', '+5 Lose'], ['mul:2', '2× Lose'], ['mul:3', '3× Lose'], ['mul:4', '4× Lose'], ['mul:5', '5× Lose']]) {
+      const o = document.createElement('option'); o.value = v; o.textContent = l; sel.appendChild(o);
+    }
+    sel.value = b.mode + ':' + b.value;
+    if (!sel.value) { const o = document.createElement('option'); o.value = b.mode + ':' + b.value; o.textContent = bonusLabel(b); sel.appendChild(o); sel.value = o.value; }
+    sel.onchange = () => { const [m, v] = sel.value.split(':'); b.mode = m; b.value = Number(v); changed(); };
+    const del = document.createElement('button'); del.className = 'x'; del.textContent = '✕'; del.setAttribute('aria-label', b.name + ' löschen');
+    del.onclick = () => { g.bonuses = bonuses(g).filter((x) => x !== b); for (const e of g.entries) if (e.b) delete e.b[b.id]; changed(); };
+    const cnt = document.createElement('div'); cnt.className = 'cnt';
+    const n = ev.filter((x) => x.ok && x.bonus?.some((y) => y.id === b.id)).length;
+    cnt.textContent = `${n} Teilnehmer haben diesen Bonus`;
+    row.append(name, sel, del, cnt); box.appendChild(row);
+  }
+  // Import-Ziel
+  const im = $('#iMode'), cur = im.value;
+  im.innerHTML = '';
+  const o = document.createElement('option'); o.value = 'add'; o.textContent = 'Als Teilnehmer hinzufügen'; im.appendChild(o);
+  for (const b of bonuses(g)) { const x = document.createElement('option'); x.value = 'bonus:' + b.id; x.textContent = `Bonus vergeben: ${b.name} (${bonusLabel(b)})`; im.appendChild(x); }
+  im.value = [...im.options].some((x) => x.value === cur) ? cur : 'add';
+  $('#iModeBox').hidden = !bonuses(g).length;
+  $('#iSrc').closest('label').hidden = im.value !== 'add';
+  $('#iPlat').closest('label').hidden = im.value !== 'add';
 }
 
 function renderPeople(ev) {
@@ -817,8 +920,21 @@ function renderPeople(ev) {
     const sub = document.createElement('div'); sub.className = 'txt';
     sub.textContent = `${PLATFORMS[x.e.p]?.label || ''} · ${x.e.c} Kommentar${x.e.c > 1 ? 'e' : ''}${x.e.t ? ' · ' + x.e.t : ''}`;
     info.append(n, sub);
+    if (x.ok && x.also?.length) { const w = document.createElement('div'); w.className = 'txt'; w.textContent = 'auch dabei auf ' + x.also.join(', '); info.appendChild(w); }
     if (!x.ok) { const w = document.createElement('div'); w.className = 'why'; w.textContent = x.reasons.join(' · '); info.appendChild(w); }
-    const tix = document.createElement('span'); tix.className = 'tix'; tix.textContent = x.ok ? `${x.tickets} Los${x.tickets > 1 ? 'e' : ''}` : '0'; tix.title = 'Lose';
+    if (bonuses(G()).length && !x.dup) {
+      const bon = document.createElement('div'); bon.className = 'bon';
+      for (const b of bonuses(G())) {
+        const on = Boolean(x.e.b?.[b.id]);
+        const t = document.createElement('button'); t.setAttribute('aria-pressed', on);
+        t.textContent = `${b.name} (${bonusLabel(b)})`;
+        t.onclick = () => { x.e.b = { ...(x.e.b || {}) }; if (on) delete x.e.b[b.id]; else x.e.b[b.id] = true; changed(); };
+        bon.appendChild(t);
+      }
+      info.appendChild(bon);
+    }
+    const tix = document.createElement('span'); tix.className = 'tix'; tix.textContent = x.ok ? `${x.tickets} Los${x.tickets > 1 ? 'e' : ''}` : '0';
+    tix.title = x.bonus?.length ? 'inkl. Bonus: ' + x.bonus.map((b) => b.name).join(', ') : 'Lose';
     const del = document.createElement('button'); del.className = 'x'; del.textContent = '✕'; del.setAttribute('aria-label', '@' + x.e.n + ' entfernen');
     del.onclick = () => { G().entries = G().entries.filter((e) => e !== x.e); changed(); };
     row.append(info, tix, del); frag.appendChild(row);
@@ -942,6 +1058,12 @@ function winnerCard(d) {
   if (d.prizeText) { const gift = document.createElement('div'); gift.className = 'gift'; gift.textContent = (d.status === 'out' ? 'Hätte gewonnen: ' : 'Gewinnt: ') + d.prizeText; card.appendChild(gift); }
 
   const entry = g.entries.find((e) => e.h === d.h && e.p === d.p);
+  if (d.bonus?.length) {
+    const bx = document.createElement('div'); bx.className = 'check';
+    const t = document.createElement('div'); t.className = 'muted small';
+    t.textContent = 'Bonus-Lose bekommen für: ' + d.bonus.join(', ') + '. Prüfe beim Gewinner, ob das stimmt.';
+    bx.appendChild(t); card.appendChild(bx);
+  }
   if (d.status === 'out' && d.reason) { const r = document.createElement('div'); r.className = 'check'; r.textContent = 'Grund: ' + d.reason; card.appendChild(r); }
 
   for (const c of g.conditions) {
@@ -1077,13 +1199,42 @@ function bind() {
   const num = (el, key, min, max) => { el.oninput = () => { const n = Math.floor(Number(el.value)); if (Number.isFinite(n) && n >= min && n <= max) { G().rules[key] = n; changed(); } }; };
   num($('#rWinners'), 'winners', 1, 100); num($('#rMaxT'), 'maxTickets', 1, 100); num($('#rTags'), 'minTags', 0, 20);
   $('#rWord').oninput = (e) => { G().rules.word = e.target.value.trim().slice(0, 60); changed(); };
-  $('#rPerComment').onchange = (e) => { G().rules.perComment = e.target.checked; if (e.target.checked && G().rules.maxTickets < 2) G().rules.maxTickets = 5; changed(); };
+  $('#rMulti').onchange = (e) => { G().rules.perComment = e.target.value === 'each'; if (G().rules.perComment && G().rules.maxTickets < 2) G().rules.maxTickets = 5; changed(); };
+  $('#rCross').onchange = (e) => { G().rules.cross = e.target.value; changed(); };
+  const addBonus = (name, modeVal) => {
+    const [mode, v] = modeVal.split(':');
+    name = String(name || '').trim().slice(0, 40);
+    if (!name) { $('#nBonus').focus(); toast('Gib dem Bonus einen Namen'); return; }
+    bonuses(G()).push({ id: uid(), name, mode, value: Number(v) });
+    $('#nBonus').value = ''; changed(); toast('Bonus hinzugefügt');
+  };
+  $('#addBonus').onclick = () => addBonus($('#nBonus').value, $('#nBonusMode').value);
+  for (const [name, mv] of [['In Story geteilt', 'mul:2'], ['Beitrag geteilt', 'add:1'], ['Abonnent / Mitglied', 'mul:2'], ['Auf allen Plattformen', 'add:2']]) {
+    const b = document.createElement('button'); b.className = 'chip combo';
+    const t = document.createElement('span'); t.textContent = '+ ' + name; const sm = document.createElement('small');
+    const [m, v] = mv.split(':'); sm.textContent = bonusLabel({ mode: m, value: Number(v) }) + ' · Vorschlag';
+    b.append(t, sm); b.onclick = () => addBonus(name, mv); $('#bonusPresets').appendChild(b);
+  }
   $('#rPrev').onchange = (e) => { G().rules.excludePrev = e.target.checked; changed(); };
   $('#rBlock').oninput = (e) => { S.settings.blacklist = [...new Set(e.target.value.split(/[\s,;]+/).map(norm).filter(Boolean))]; store.saveSettings(); render(); };
 
   $('#iGo').onclick = () => {
     const { rows, bad } = parseLines($('#iText').value);
     if (!rows.length) { $('#iInfo').textContent = 'Keine Namen erkannt. Jede Zeile muss mit dem Namen beginnen.'; return; }
+    const mode = $('#iMode').value || 'add';
+    if (mode.startsWith('bonus:')) {
+      const bid = mode.slice(6), b = bonuses(G()).find((x) => x.id === bid);
+      const names = new Set(rows.map((r) => r.h)); let hit = 0; const missing = [];
+      for (const h of names) {
+        const es = G().entries.filter((e) => e.h === h);
+        if (!es.length) { missing.push('@' + h); continue; }
+        for (const e of es) { e.b = { ...(e.b || {}), [bid]: true }; }
+        hit++;
+      }
+      $('#iText').value = '';
+      $('#iInfo').textContent = `Bonus „${b?.name}“ an ${hit} Teilnehmer vergeben.${missing.length ? ` Nicht in der Teilnehmerliste: ${missing.slice(0, 15).join(', ')}${missing.length > 15 ? ' …' : ''}` : ''}`;
+      changed(); return;
+    }
     const { added, merged } = importRows(rows, $('#iPlat').value, $('#iSrc').value);
     $('#iText').value = '';
     $('#iInfo').textContent = `${added} neu, ${merged} zusammengefasst${bad.length ? `, ${bad.length} Zeilen ohne erkennbaren Namen übersprungen` : ''}.`;
@@ -1096,6 +1247,7 @@ function bind() {
     S.filter = b.dataset.f; for (const x of document.querySelectorAll('.filterbar [data-f]')) x.setAttribute('aria-pressed', x === b); render();
   };
   $('#pSearch').oninput = () => render();
+  $('#iMode').onchange = () => render();
 
   $('#drawBtn').onclick = () => startDraw();
   const addPrize = () => {
